@@ -10,8 +10,8 @@
     "server_ctx": 2048,
     "server_threads": 2,
     "temperature": 0.7,
-    "max_tokens": 256,
-    "timeout": 180
+    "max_tokens": 128,
+    "timeout": 120
   },
   "whisper": {
     "binary": "",
@@ -24,14 +24,14 @@
     "input": "auto",
     "output": "auto",
     "sample_rate": 16000,
-    "record_seconds": 8,
+    "record_seconds": 6,
     "low_peak_threshold": 400
   },
   "vad": {
     "enabled": true,
     "threshold": 700,
     "silence_ms": 900,
-    "max_seconds": 20,
+    "max_seconds": 12,
     "pre_roll_ms": 300,
     "post_roll_ms": 200,
     "min_speech_ms": 400
@@ -45,12 +45,12 @@
     "engine": "piper",
     "model": "",
     "binary": "",
-    "max_chars": 600
+    "max_chars": 450
   },
   "memory": {
     "enabled": true,
-    "max_messages": 8,
-    "max_tokens_budget": 1200,
+    "max_messages": 6,
+    "max_tokens_budget": 900,
     "db_path": ""
   },
   "performance": {
