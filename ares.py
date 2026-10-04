@@ -81,6 +81,7 @@ def run_status(ares) -> int:
     print("Temperatura: " + (f"{st['temp']:.1f} C" if st["temp"] is not None else "N/D"))
     print("Bateria: " + (st["battery"] or "N/D"))
     print("Low memory: " + ("SIM" if st["low_memory"] else "nao"))
+    print("Contexto LLM: " + str(ares.context.token_budget()) + " tokens")
     return 0
 
 
