@@ -189,7 +189,8 @@ class Ares7:
             extra = self.memory.context_for(text) if self.memory else ""
             messages = self.context.build_messages(text, extra_system=extra)
             try:
-                reply = self.llm.chat(messages)
+                # Respostas curtas usam menos tokens e terminam mais rápido.
+                reply = self.llm.fast_chat(messages) if len(text) <= 120 else self.llm.chat(messages)
             except LLMError as exc:
                 self.emit("error", str(exc))
                 self.set_state("ERROR")
