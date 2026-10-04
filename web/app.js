@@ -14,7 +14,7 @@
 
   function add(who, text) {
     const whoEl = document.createElement('div');
-    whoEl.className = who === 'USER' ? 'user' : 'jarvis';
+    whoEl.className = who === 'USER' ? 'user' : 'ares';
     whoEl.textContent = who + ':';
     const body = document.createElement('div');
     body.className = 'body';
