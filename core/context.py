@@ -70,6 +70,10 @@ class ContextManager:
         self.history = []
         self.summary = ""
 
+    def token_budget(self) -> int:
+        """Retorna o orçamento configurado para o prompt do LLM."""
+        return self.budget
+
     # ---- montagem do prompt --------------------------------------------------
     def build_messages(self, user_text: str, extra_system: str = "") -> list[dict]:
         """Monta a lista de mensagens cabendo no orcamento de tokens."""
