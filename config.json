@@ -38,7 +38,7 @@
   },
   "wake_word": {
     "enabled": false,
-    "word": "jarvis",
+    "word": "ares",
     "mode": "push_to_talk"
   },
   "tts": {
