@@ -50,6 +50,17 @@
   }
 
   document.getElementById('send').onclick = send;
+  // Limpa o contexto local do ARES-7 sem apagar a memória permanente.
+  const clearBtn = document.getElementById('clear');
+  if (clearBtn) {
+    clearBtn.onclick = async () => {
+      try {
+        await api('/api/clear', 'POST', {});
+        chat.textContent = '';
+        add('ARES-7', 'Contexto limpo.');
+      } catch (e) { /* erro já tratado pela API */ }
+    };
+  }
   document.getElementById('text').addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
 
   const micBtn = document.getElementById('mic');
