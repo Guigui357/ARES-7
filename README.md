@@ -48,6 +48,15 @@ Coloque em `./models` (ou aponte no config):
 - Piper: voz pt_BR `.onnx` + `.onnx.json`
 
 
+## ARES-7 v1.1
+
+### Performance
+- Fast Path local para comandos que não precisam do LLM.
+- Geração curta para perguntas simples.
+- Limites padrão reduzidos para máquinas com pouca RAM.
+- Histórico e orçamento de contexto mais enxutos.
+- Status mostra o orçamento de contexto do LLM.
+
 ## Funções locais
 
 O ARES-7 já possui comandos locais para:
