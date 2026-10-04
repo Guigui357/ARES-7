@@ -47,6 +47,28 @@ Coloque em `./models` (ou aponte no config):
 - Qwen: `qwen2.5-1.5b-instruct-q4_k_m.gguf` (llama.cpp, `llama serve`)
 - Piper: voz pt_BR `.onnx` + `.onnx.json`
 
+
+## Funções locais
+
+O ARES-7 já possui comandos locais para:
+
+- 🎤 voz com VAD + Whisper.cpp
+- 🧠 Qwen via llama.cpp, sem nuvem
+- 🔊 Piper/fallback de voz
+- 📝 notas e memória persistente SQLite
+- ⏱️ timers e lembretes
+- 🧮 calculadora segura
+- 📸 screenshot
+- 🔊 volume/mudo e brilho
+- 🔒 bloquear, suspender, reiniciar e desligar com confirmação
+- 📂 abrir/listar/buscar arquivos e pastas
+- 🌐 abrir sites, pesquisar e abrir URLs diretamente
+- 🎵 controlar mídia via playerctl
+- 🖥️ abrir/fechar aplicativos
+- 📊 CPU, RAM, temperatura, bateria, disco, IP e uptime
+- 📱 controle remoto HTTP com token
+- 🧹 limpar o contexto do chat pela GUI, CLI ou interface web
+
 ## Estrutura
 
 ```
