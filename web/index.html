@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JARVIS</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>J A R V I S</h1>
+  <span id="state" class="state">—</span>
+</header>
+
+<section id="token-row">
+  <input id="token" type="password" placeholder="token de acesso" autocomplete="off">
+  <button id="save-token">OK</button>
+</section>
+
+<main id="chat"></main>
+
+<section id="controls">
+  <button id="mic" class="big">🎤 FALAR</button>
+  <div class="text-row">
+    <input id="text" type="text" placeholder="Digite um comando..." autocomplete="off">
+    <button id="send">ENVIAR</button>
+  </div>
+</section>
+
+<section id="status">
+  <div>CPU <b id="st-cpu">--</b></div>
+  <div>RAM <b id="st-ram">--</b></div>
+  <div>MIC <b id="st-mic">--</b></div>
+  <div>WHISPER <b id="st-whisper">--</b></div>
+  <div>QWEN <b id="st-qwen">--</b></div>
+  <div>PIPER <b id="st-piper">--</b></div>
+</section>
+
+<script src="/app.js"></script>
+</body>
+</html>
