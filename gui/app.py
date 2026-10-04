@@ -124,9 +124,9 @@ class Ares7GUI:
             x0 = width * i / segments
             h.create_line(x0, height - 2, x0 + width / segments + 1, height - 2,
                           fill=blend(CYAN, BG, alpha), width=2)
-        h.create_text(23, 22, text="J A R V I S", anchor="w", fill=blend(CYAN, BG, 0.28),
+        h.create_text(23, 22, text="A R E S - 7", anchor="w", fill=blend(CYAN, BG, 0.28),
                       font=(SANS, 19, "bold"))
-        h.create_text(21, 21, text="J A R V I S", anchor="w", fill=CYAN, font=(SANS, 19, "bold"))
+        h.create_text(21, 21, text="A R E S - 7", anchor="w", fill=CYAN, font=(SANS, 19, "bold"))
         h.create_text(23, 40, text="NÚCLEO LOCAL  //  WHISPER · QWEN · PIPER", anchor="w",
                       fill=DIM, font=(MONO, 8))
         col = self.online_color
@@ -222,7 +222,7 @@ class Ares7GUI:
         )
 
         self.chat.tag_configure(
-            "who_jarvis",
+            "who_ares",
             foreground=CYAN,
             font=(MONO, 9, "bold"),
             spacing1=5
@@ -242,7 +242,7 @@ class Ares7GUI:
         )
 
         self.chat.tag_configure(
-            "msg_jarvis",
+            "msg_ares",
             foreground=TEXT,
             lmargin1=12,
             lmargin2=12
@@ -558,9 +558,9 @@ class Ares7GUI:
             self.chat.insert("end", f"  {stamp}\n", "stamp")
             self.chat.insert("end", text + "\n\n", "msg_user")
         elif kind == "ares":
-            self.chat.insert("end", "◆ ARES7", "who_jarvis")
+            self.chat.insert("end", "◆ ARES7", "who_ares")
             self.chat.insert("end", f"  {stamp}\n", "stamp")
-            self.chat.insert("end", text + "\n\n", "msg_jarvis")
+            self.chat.insert("end", text + "\n\n", "msg_ares")
         elif kind in ("system", "ok", "warn"):
             prefix = {"system": "// ", "ok": "[ OK ] ", "warn": "[ -- ] "}[kind]
             self.chat.insert("end", prefix + text + "\n", kind)
