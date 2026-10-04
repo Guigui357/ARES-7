@@ -1,4 +1,4 @@
-# JARVIS FAST / LOCAL
+# ARES-7 FAST / LOCAL
 
 Assistente de voz 100% local para Ubuntu 24.04, feito para rodar em notebook
 fraco (4 GB de RAM, sem GPU). Pipeline:
@@ -14,14 +14,14 @@ Sem nuvem, sem APIs externas, sem chaves.
 ## Uso
 
 ```bash
-python3 jarvis.py              # GUI (Tkinter)
-python3 jarvis.py --cli        # terminal
-python3 jarvis.py --diagnose   # relatorio de saude do sistema
-python3 jarvis.py --benchmark  # mede desempenho
-python3 jarvis.py --low-memory # modo ULTRA FAST
-python3 jarvis.py --remote     # ativa o servidor remoto (celular via navegador)
-python3 jarvis.py --wake       # wake word "jarvis" (modo CONTINUOUS)
-python3 jarvis.py --debug      # logs detalhados
+python3 ares.py              # GUI (Tkinter)
+python3 ares.py --cli        # terminal
+python3 ares.py --diagnose   # relatorio de saude do sistema
+python3 ares.py --benchmark  # mede desempenho
+python3 ares.py --low-memory # modo ULTRA FAST
+python3 ares.py --remote     # ativa o servidor remoto (celular via navegador)
+python3 ares.py --wake       # wake word "ares" (modo CONTINUOUS)
+python3 ares.py --debug      # logs detalhados
 ```
 
 ## Configuração
@@ -36,8 +36,8 @@ Edite `config.json` (nunca o código-fonte). Campos principais:
 - `memory.max_tokens_budget` — teto de tokens do prompt (cura o erro de contexto)
 - `remote.token` — troque antes de expor na LAN
 
-Variáveis de ambiente também funcionam: `JARVIS_WHISPER_MODEL`,
-`JARVIS_PIPER_MODEL`, `JARVIS_LLM_HOST`, `JARVIS_LOW_MEMORY` etc.
+Variáveis de ambiente também funcionam: `ARES7_WHISPER_MODEL`,
+`ARES7_PIPER_MODEL`, `ARES7_LLM_HOST`, `ARES7_LOW_MEMORY` etc.
 
 ## Modelos
 
@@ -50,7 +50,7 @@ Coloque em `./models` (ou aponte no config):
 ## Estrutura
 
 ```
-jarvis.py          launcher (GUI/CLI/diagnose/benchmark)
+ares.py             launcher (GUI/CLI/diagnose/benchmark)
 core/              assistant, router, context, memory, config, logs
 audio/             devices, recorder, vad, player
 stt/               whisper.cpp
