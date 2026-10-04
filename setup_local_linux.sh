@@ -36,9 +36,9 @@ if [ -n "$PKGS" ]; then
 fi
 
 # 4. Ambiente virtual (somente se houver dependencias pip no futuro;
-#    o JARVIS roda 100% com a biblioteca padrao, entao e opcional)
+#    o ARES-7 roda 100% com a biblioteca padrao, entao e opcional)
 if [ ! -d .venv ]; then
-  python3 -m venv .venv 2>/dev/null || echo "venv indisponivel; ok, o JARVIS nao precisa de pip."
+  python3 -m venv .venv 2>/dev/null || echo "venv indisponivel; ok, o ARES-7 nao precisa de pip."
 fi
 
 # 5. Pastas
@@ -75,7 +75,7 @@ fi
 
 # 9. Config
 if [ ! -f config.json ]; then
-  echo "config.json nao encontrado (o JARVIS usara os defaults internos)."
+  echo "config.json nao encontrado (o ARES-7 usara os defaults internos)."
 fi
 
 # 10. Teste rapido
@@ -89,7 +89,7 @@ cat > ares-launcher.sh <<'LAUNCH'
 cd "$(dirname "$0")"
 exec python3 ares.py "$@"
 LAUNCH
-chmod +x jarvis-launcher.sh
+chmod +x ares-launcher.sh
 
 echo ""
 echo "=== SETUP CONCLUIDO ==="
