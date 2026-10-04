@@ -6,7 +6,7 @@ h1{color:#00e5ff;font-size:20px;letter-spacing:4px;margin:0}
 #token-row input{flex:1}
 #chat{background:#06101c;border:1px solid #0f3552;border-radius:6px;min-height:220px;max-height:46vh;overflow-y:auto;padding:10px;margin:10px 0;font-size:14px}
 #chat .user{color:#6db3ff;margin-top:8px}
-#chat .jarvis{color:#00e5ff;margin-top:8px}
+#chat .ares{color:#00e5ff;margin-top:8px}
 #chat .body{margin:2px 0 6px 12px;white-space:pre-wrap}
 #controls{margin:10px 0}
 button{background:#0a1a2c;color:#00e5ff;border:1px solid #0f3552;border-radius:6px;padding:10px 14px;font-family:monospace;font-weight:bold;cursor:pointer}
