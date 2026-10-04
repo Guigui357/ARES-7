@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# setup_local_linux.sh — prepara o JARVIS num Ubuntu 24.04 de 4 GB de RAM.
+# setup_local_linux.sh — prepara o ARES-7 num Ubuntu 24.04 de 4 GB de RAM.
 # Instala SOMENTE o necessario. Nada de pacotes desnecessarios.
 set -e
 cd "$(dirname "$0")"
 
-echo "=== JARVIS SETUP (Ubuntu local) ==="
+echo "=== ARES-7 SETUP (Ubuntu local) ==="
 
 # 1. Ubuntu?
 if [ -r /etc/os-release ]; then
@@ -42,10 +42,10 @@ if [ ! -d .venv ]; then
 fi
 
 # 5. Pastas
-mkdir -p models ~/.jarvis
+mkdir -p models ~/.ares
 
 # 6. Whisper.cpp
-if command -v whisper-cli >/dev/null || [ -n "$JARVIS_WHISPER_BIN" ]; then
+if command -v whisper-cli >/dev/null || [ -n "$ARES7_WHISPER_BIN" ]; then
   echo "Whisper: OK"
 else
   echo "AVISO: whisper-cli nao encontrado."
@@ -81,18 +81,18 @@ fi
 # 10. Teste rapido
 echo ""
 echo "=== Teste rapido ==="
-python3 jarvis.py --status || true
+python3 ares.py --status || true
 
 # 11. Launcher
-cat > jarvis-launcher.sh <<'LAUNCH'
+cat > ares-launcher.sh <<'LAUNCH'
 #!/usr/bin/env bash
 cd "$(dirname "$0")"
-exec python3 jarvis.py "$@"
+exec python3 ares.py "$@"
 LAUNCH
 chmod +x jarvis-launcher.sh
 
 echo ""
 echo "=== SETUP CONCLUIDO ==="
-echo "Rode:  ./jarvis-launcher.sh           (GUI)"
-echo "       ./jarvis-launcher.sh --cli     (terminal)"
-echo "       ./jarvis-launcher.sh --diagnose"
+echo "Rode:  ./ares-launcher.sh           (GUI)"
+echo "       ./ares-launcher.sh --cli     (terminal)"
+echo "       ./ares-launcher.sh --diagnose"
