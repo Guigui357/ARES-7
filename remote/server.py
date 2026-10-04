@@ -131,6 +131,9 @@ def make_handler(ares, token: str):
             elif parsed.path == "/api/stop":
                 ares.vad.stop_event.set()
                 self._json({"stopped": True})
+            elif parsed.path == "/api/clear":
+                ares.context.reset()
+                self._json({"cleared": True})
             elif parsed.path == "/api/reconnect":
                 self._json({"message": ares.reconnect_llm()})
             elif parsed.path == "/api/tts":
