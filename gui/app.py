@@ -368,6 +368,19 @@ class Ares7GUI:
             ipady=1
         )
 
+        self.clear_button = self._make_button(
+            row2,
+            "CLEAR CHAT",
+            self.on_clear_chat,
+            DIM,
+            11
+        )
+        self.clear_button.pack(
+            side="left",
+            padx=(5, 0),
+            ipady=1
+        )
+
     def _make_button(self, parent, text, command, color, width):
         button = tk.Button(
             parent, text=text, command=command, bg=PANEL, fg=color,
@@ -542,6 +555,14 @@ class Ares7GUI:
         def _list() -> None:
             self.events.put(("system", self.ares.list_input_devices()))
         threading.Thread(target=_list, daemon=True).start()
+
+    def on_clear_chat(self) -> None:
+        """Limpa apenas o histórico visual da GUI e o contexto do LLM."""
+        self.ares.context.reset()
+        self.chat.config(state="normal")
+        self.chat.delete("1.0", "end")
+        self.chat.config(state="disabled")
+        self.append("ok", "Chat e contexto local limpos.")
 
     def on_close(self) -> None:
         self.closing = True
