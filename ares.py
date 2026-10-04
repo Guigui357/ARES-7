@@ -47,7 +47,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def make_jarvis(args) -> "Ares7":
+def make_ares(args) -> "Ares7":
     from core.assistant import Ares7
     config = Config(args.config)
     if args.wake:
@@ -100,7 +100,7 @@ def cli_emit(kind: str, payload) -> None:
 def run_cli(ares) -> int:
     ares.emit = cli_emit
     print("=" * 50)
-    print(" J A R V I S   C L I")
+    print(" A R E S - 7   C L I")
     print("=" * 50)
     st = ares.collect_status()
     print("Whisper: " + ("OK" if st["whisper_ok"] else "PROBLEMA (use --diagnose)"))
@@ -177,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
         import benchmark
         return benchmark.run(Config(args.config), low_memory=args.low_memory)
 
-    ares = make_jarvis(args)
+    ares = make_ares(args)
     maybe_start_remote(ares, args)
     if args.status:
         return run_status(ares)
