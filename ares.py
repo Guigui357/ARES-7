@@ -128,6 +128,10 @@ def run_cli(ares) -> int:
             ares.context.reset()
             print("Histórico limpo.")
             continue
+        if lowered == "/tts":
+            ares.speak_enabled = not ares.speak_enabled
+            print("TTS: " + ("ligado" if ares.speak_enabled else "desligado"))
+            continue
         if lowered == "/dispositivos":
             print(ares.list_input_devices())
             continue
