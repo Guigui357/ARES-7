@@ -219,6 +219,15 @@ class LlamaClient:
             self.api_mode = "auto"
         return self.ensure_online(wait_seconds=8)
 
+    def fast_chat(self, messages: list[dict]) -> str:
+        """Atalho para respostas curtas, usando limites agressivos."""
+        online, _, _ = self.probe()
+        if not online:
+            ok, _ = self.ensure_online(wait_seconds=8)
+            if not ok:
+                raise LLMError("llama.cpp offline", kind="connection")
+        return self.chat(messages, max_tokens=min(64, int(self.cfg.get("max_tokens", 128))))
+
     # ---- chat ------------------------------------------------------------------
     def _parse_openai_reply(self, body: str) -> str:
         try:
