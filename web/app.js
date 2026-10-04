@@ -1,14 +1,14 @@
-/* JARVIS web remota — leve, sem frameworks */
+/* ARES-7 web remota — leve, sem frameworks */
 (function () {
   const chat = document.getElementById('chat');
   const stateEl = document.getElementById('state');
   const tokenInput = document.getElementById('token');
-  let token = localStorage.getItem('jarvis_token') || '';
+  let token = localStorage.getItem('ares7_token') || '';
   tokenInput.value = token;
 
   document.getElementById('save-token').onclick = () => {
     token = tokenInput.value.trim();
-    localStorage.setItem('jarvis_token', token);
+    localStorage.setItem('ares7_token', token);
     refresh();
   };
 
@@ -25,13 +25,13 @@
   }
 
   async function api(path, method, payload) {
-    const opts = { method: method || 'GET', headers: { 'X-Jarvis-Token': token } };
+    const opts = { method: method || 'GET', headers: { 'X-Ares7-Token': token } };
     if (payload) {
       opts.headers['Content-Type'] = 'application/json';
       opts.body = JSON.stringify(payload);
     }
     const res = await fetch(path, opts);
-    if (res.status === 401) { add('JARVIS', 'Token inválido. Confira e salve de novo.'); throw new Error('401'); }
+    if (res.status === 401) { add('ARES-7', 'Token inválido. Confira e salve de novo.'); throw new Error('401'); }
     return res.json();
   }
 
@@ -44,7 +44,7 @@
     stateEl.textContent = 'PROCESSANDO…';
     try {
       const data = await api('/api/chat', 'POST', { text });
-      add('JARVIS', data.reply || '(sem resposta)');
+      add('ARES-7', data.reply || '(sem resposta)');
     } catch (e) { /* ja avisado */ }
     refresh();
   }
@@ -63,7 +63,7 @@
       if (data.started) {
         micBtn.classList.add('listening');
         micBtn.textContent = '⏹ OUVINDO… (toque p/ parar)';
-        add('JARVIS', 'Ouvindo no microfone do notebook…');
+        add('ARES-7', 'Ouvindo no microfone do notebook…');
       }
     }
   };
