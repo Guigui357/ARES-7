@@ -295,6 +295,7 @@ class IntentRouter:
             self._intent_audio,
             self._intent_run_command,
             self._intent_file_ops,
+            self._intent_open_url,
             self._intent_open,
             self._intent_info,
         ]
@@ -718,6 +719,18 @@ class IntentRouter:
         if ut.stem("list", "mostr") and ut.has("pasta", "diretorio", "arquivos") and ut.short(8):
             return IntentResult(t_files.list_dir())
         return None
+
+    # ---- abrir URL direta -------------------------------------------------------------------------------
+    def _intent_open_url(self, ut: Utterance) -> IntentResult | None:
+        if ut.howto:
+            return None
+        match = re.search(r"(?:abrir|abra|acessar|acesse|ir para|entrar em)\s+((?:https?://)?(?:www\.)?[a-z0-9][a-z0-9.-]+\.[a-z]{2,}(?:/[^\s]*)?)", ut.raw, re.IGNORECASE)
+        if not match:
+            return None
+        url = match.group(1)
+        if not url.lower().startswith(("http://", "https://")):
+            url = "https://" + url
+        return IntentResult(t_apps.open_url(url, "o endereço solicitado"))
 
     # ---- abrir sites, apps e pastas ---------------------------------------------------------------------
     def _intent_open(self, ut: Utterance) -> IntentResult | None:
