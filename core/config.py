@@ -177,7 +177,7 @@ class Config:
     def apply_low_memory(self) -> None:
         """Reduz parametros para o modo de pouca RAM."""
         self.set("llm", "server_ctx", min(1024, int(self.get("llm", "server_ctx", 2048))))
-        self.set("llm", "max_tokens", min(160, int(self.get("llm", "max_tokens", 256))))
+        self.set("llm", "max_tokens", min(128, int(self.get("llm", "max_tokens", 128))))
         self.set("llm", "server_threads", min(2, int(self.get("llm", "server_threads", 2))))
         self.set("whisper", "threads", min(2, int(self.get("whisper", "threads", 2))))
         self.set("memory", "max_messages", min(4, int(self.get("memory", "max_messages", 8))))
