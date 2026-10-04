@@ -172,6 +172,7 @@ class Ares7:
         self.set_state("PROCESSING")
         if self._handle_confirmation(text):
             return
+        # Fast path: comandos locais nunca precisam acordar o LLM.
         result = self.router.try_handle(text)
         if result is not None:
             if result.confirm:
