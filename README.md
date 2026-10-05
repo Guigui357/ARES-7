@@ -48,6 +48,28 @@ Coloque em `./models` (ou aponte no config):
 - Piper: voz pt_BR `.onnx` + `.onnx.json`
 
 
+## PyInstaller
+
+O ARES-7 pode ser empacotado como aplicativo Linux sem instalar bibliotecas Python extras do projeto:
+
+```bash
+./build_pyinstaller.sh
+```
+
+O executável será criado em `dist/ARES-7/ARES-7`.
+
+O build inclui o código Python, `config.json` inicial e a interface web. Um `config.json` colocado ao lado do executável tem prioridade e pode ser editado normalmente.
+
+**Importante:** PyInstaller não substitui os componentes externos. `whisper-cli`, servidor `llama`/llama.cpp, modelos GGUF/Whisper e Piper continuam separados, mantendo o ARES-7 leve para máquinas com 4 GB de RAM.
+
+Teste após o build:
+
+```bash
+./dist/ARES-7/ARES-7 --version
+./dist/ARES-7/ARES-7 --status
+./dist/ARES-7/ARES-7 --cli
+```
+
 ## ARES-7 v1.2
 
 ### Usabilidade e controle
