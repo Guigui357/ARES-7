@@ -12,6 +12,7 @@ from __future__ import annotations
 import os
 import shutil
 import socket
+import subprocess
 import sys
 
 from audio.devices import list_alsa_inputs, list_pipewire_inputs
@@ -92,7 +93,7 @@ def run(config: Config, low_memory: bool = False) -> int:
     # GPU/Vulkan — diagnóstico leve, sem carregar modelos.
     vulkan = shutil.which("vulkaninfo")
     if vulkan:
-        code, out = __import__("subprocess").run([vulkan, "--summary"], capture_output=True, text=True, timeout=8).returncode, ""
+        code = subprocess.run([vulkan, "--summary"], capture_output=True, text=True, timeout=8).returncode
         check("PASS", "Vulkan/GPU", "vulkaninfo disponível" if code == 0 else "vulkaninfo falhou")
     else:
         check("WARN", "Vulkan/GPU", "vulkaninfo não encontrado — GPU offload não pode ser diagnosticado")
