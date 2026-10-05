@@ -48,6 +48,16 @@ Coloque em `./models` (ou aponte no config):
 - Piper: voz pt_BR `.onnx` + `.onnx.json`
 
 
+## ARES-7 v1.2
+
+### Usabilidade e controle
+- Comandos de volume relativos: “aumente o volume em 20”.
+- Mais aliases para aplicativos e suporte a Visual Studio Code/Codium.
+- `--version` informa a versão instalada.
+- Diagnóstico leve de Vulkan/GPU, sem carregar modelos.
+- Endpoint remoto `/api/ping` para verificar rapidamente se o ARES-7 está vivo.
+- Mantido o princípio: comandos locais não acordam o Qwen.
+
 ## ARES-7 v1.1
 
 ### Performance
