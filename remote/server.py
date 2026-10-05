@@ -73,7 +73,9 @@ def make_handler(ares, token: str):
             if not self._authorized():
                 self._reject()
                 return
-            if path == "/api/status":
+            if path == "/api/ping":
+                self._json({"ok": True, "name": "ARES-7", "version": "1.2.0"})
+            elif path == "/api/status":
                 st = ares.collect_status()
                 gb = 1024 ** 3
                 self._json({
