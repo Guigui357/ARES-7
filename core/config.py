@@ -14,8 +14,15 @@ from __future__ import annotations
 import copy
 import json
 import os
+import sys
 
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Diretório dos recursos empacotados pelo PyInstaller ou do projeto-fonte.
+if getattr(sys, "frozen", False):
+    PROJECT_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(sys.executable)))
+    APP_DIR = os.path.dirname(os.path.abspath(sys.executable))
+else:
+    PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    APP_DIR = PROJECT_DIR
 HOME = os.path.expanduser("~")
 ARES7_HOME = os.path.join(HOME, ".ares")
 
@@ -115,6 +122,7 @@ ENV_MAP = {
 
 def _find_config_file() -> str | None:
     candidates = [
+        os.path.join(APP_DIR, "config.json"),
         os.path.join(PROJECT_DIR, "config.json"),
         os.path.join(ARES7_HOME, "config.json"),
     ]
