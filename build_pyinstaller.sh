@@ -5,17 +5,22 @@ cd "$(dirname "$0")"
 
 echo "=== ARES-7 PyInstaller ==="
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "ERRO: python3 não encontrado."
-  exit 1
+PYTHON="python3"
+if [ -x ".venv/bin/python" ]; then
+  PYTHON=".venv/bin/python"
+elif [ ! -d ".venv" ]; then
+  echo "Criando ambiente virtual de build..."
+  python3 -m venv .venv
+  PYTHON=".venv/bin/python"
 fi
 
-if ! python3 -m PyInstaller --version >/dev/null 2>&1; then
-  echo "PyInstaller não encontrado. Instalando..."
-  python3 -m pip install --user pyinstaller
+if ! "$PYTHON" -m PyInstaller --version >/dev/null 2>&1; then
+  echo "Instalando PyInstaller no ambiente virtual..."
+  "$PYTHON" -m pip install --upgrade pip
+  "$PYTHON" -m pip install pyinstaller
 fi
 
-python3 -m PyInstaller --clean --noconfirm ARES-7.spec
+"$PYTHON" -m PyInstaller --clean --noconfirm ARES-7.spec
 
 echo ""
 echo "=== BUILD CONCLUÍDO ==="
