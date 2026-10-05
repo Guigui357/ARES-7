@@ -27,10 +27,11 @@ from core.config import Config  # noqa: E402
 from core.logs import log, set_debug  # noqa: E402
 
 TAG = "MAIN"
+VERSION = "1.2.0"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ares.py", description="ARES7 - assistente de voz 100% local")
+    parser = argparse.ArgumentParser(prog="ares.py", description="ARES-7 - assistente de voz 100% local")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--cli", "--headless", dest="cli", action="store_true", help="modo terminal (sem GUI)")
     mode.add_argument("--diagnose", action="store_true", help="relatorio de diagnostico completo")
@@ -42,6 +43,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--low-memory", action="store_true", help="modo ULTRA FAST (pouca RAM)")
     parser.add_argument("--remote", action="store_true", help="subir o servidor remoto (remote.*)")
     parser.add_argument("--wake", action="store_true", help="wake word continua ('ares')")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
     parser.add_argument("--debug", action="store_true", help="logs detalhados")
     parser.add_argument("--config", default=None, help="caminho alternativo do config.json")
     return parser
