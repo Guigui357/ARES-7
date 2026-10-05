@@ -657,7 +657,12 @@ class IntentRouter:
             converted = convert_number_words(norm, keep_articles=True)
             level = re.search(r"\b(\d{1,3})\b", converted)
             if level:
-                return IntentResult(t_sys.volume(f"{min(100, int(level.group(1)))}%"))
+                value = min(100, int(level.group(1)))
+                # "aumente em 20" é relativo; "coloque em 20" é absoluto.
+                if re.search(r"\bem\s+\d{1,3}\b", converted) and ut.stem("aument", "sub", "elev", "diminu", "abaix", "reduz"):
+                    sign = "-" if ut.stem("diminu", "abaix", "reduz") else "+"
+                    return IntentResult(t_sys.volume(f"{value}%{sign}"))
+                return IntentResult(t_sys.volume(f"{value}%"))
             if ut.has("maximo", "maxima"):
                 return IntentResult(t_sys.volume("100%"))
             if ut.has("minimo", "minima"):
