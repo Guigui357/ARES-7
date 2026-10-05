@@ -27,7 +27,7 @@ from core.config import Config  # noqa: E402
 from core.logs import log, set_debug  # noqa: E402
 
 TAG = "MAIN"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
