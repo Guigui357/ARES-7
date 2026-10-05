@@ -89,6 +89,14 @@ def run(config: Config, low_memory: bool = False) -> int:
         check("PASS" if srv_bin else "WARN", "llama.cpp binario",
               srv_bin or "llama-server/llama nao encontrado no PATH (necessario para autostart)")
 
+    # GPU/Vulkan — diagnóstico leve, sem carregar modelos.
+    vulkan = shutil.which("vulkaninfo")
+    if vulkan:
+        code, out = __import__("subprocess").run([vulkan, "--summary"], capture_output=True, text=True, timeout=8).returncode, ""
+        check("PASS", "Vulkan/GPU", "vulkaninfo disponível" if code == 0 else "vulkaninfo falhou")
+    else:
+        check("WARN", "Vulkan/GPU", "vulkaninfo não encontrado — GPU offload não pode ser diagnosticado")
+
     # porta do remoto
     port = int(config.get("remote", "port", 8765))
     sock = socket.socket()
