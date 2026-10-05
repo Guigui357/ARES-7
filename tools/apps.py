@@ -36,9 +36,10 @@ APPS = [
      ["gnome-text-editor", "gedit", "kate", "mousepad", "xed"]),
     ({"monitor", "tarefas"}, "o monitor do sistema",
      ["gnome-system-monitor", "ksysguard", "xfce4-taskmanager"]),
-    ({"firefox"}, "o Firefox", ["firefox"]),
+    ({"firefox", "navegador", "browser"}, "o Firefox", ["firefox"]),
     ({"chrome", "chromium"}, "o Chrome", ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]),
     ({"brave"}, "o Brave", ["brave-browser", "brave"]),
+    ({"vscode", "code"}, "o Visual Studio Code", ["code", "codium", "code-oss"]),
 ]
 
 SEARCH_ENGINES = {
