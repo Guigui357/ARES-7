@@ -58,6 +58,17 @@
     "auto_low_memory": true,
     "low_memory_threshold_mb": 700
   },
+  "whatsapp": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 8766,
+    "verify_token": "",
+    "app_secret": "",
+    "access_token": "",
+    "phone_number_id": "",
+    "api_version": "v23.0",
+    "allowed_senders": []
+  },
   "remote": {
     "enabled": false,
     "host": "127.0.0.1",
