@@ -128,6 +128,66 @@ benchmark.py       tempos do pipeline
 setup_local_linux.sh  prepara o sistema
 ```
 
+## WhatsApp Cloud API (oficial)
+
+O ARES-7 pode receber mensagens de texto pelo WhatsApp Business Platform e responder usando o núcleo existente (comandos locais ou Qwen/llama.cpp). A integração usa somente a biblioteca padrão do Python; fica **desativada por padrão**.
+
+### 1. Pré-requisitos
+
+- Uma aplicação Meta configurada com o produto WhatsApp, um número Cloud API e permissões de mensagens.
+- O **Phone Number ID**, um token de acesso, o **App Secret** e um token de verificação criado por você.
+- Um endpoint HTTPS público para o webhook. Em um notebook doméstico, use um reverse proxy/túnel HTTPS confiável apontando para `127.0.0.1:8766`; não exponha diretamente a porta na internet.
+- O servidor ARES-7 e o serviço llama.cpp ligados quando quiser que o bot responda.
+
+### 2. Configure sem publicar segredos
+
+No `config.json`, preencha a seção `whatsapp`:
+
+```json
+"whatsapp": {
+  "enabled": true,
+  "host": "127.0.0.1",
+  "port": 8766,
+  "verify_token": "COLOQUE_UM_SEGREDO_LONGO_AQUI",
+  "app_secret": "",
+  "access_token": "",
+  "phone_number_id": "",
+  "api_version": "v23.0",
+  "allowed_senders": ["5511999999999"]
+}
+```
+
+Esse bloco é um exemplo de formato, **não credenciais reais**. Substitua os valores; o número em `allowed_senders` deve conter o código do país e DDD, apenas dígitos (ex.: `55...`), sem `+`. Só remetentes listados podem acionar o ARES-7. Mantenha `allowed_senders` preenchido e não publique tokens, App Secret ou números privados no GitHub. Para segredos, prefira variáveis de ambiente:
+
+- `ARES7_WHATSAPP_ENABLED=true`
+- `ARES7_WHATSAPP_VERIFY_TOKEN`
+- `ARES7_WHATSAPP_APP_SECRET`
+- `ARES7_WHATSAPP_ACCESS_TOKEN`
+- `ARES7_WHATSAPP_PHONE_NUMBER_ID`
+- Opcional: `ARES7_WHATSAPP_HOST`, `ARES7_WHATSAPP_PORT`, `ARES7_WHATSAPP_API_VERSION`
+
+As variáveis de ambiente têm prioridade sobre `config.json`. Não coloque os valores reais nos comandos que serão salvos no histórico do shell.
+
+### 3. Configure o webhook na Meta
+
+1. Inicie o ARES-7 normalmente; com `whatsapp.enabled=true`, ele inicia o listener em `127.0.0.1:8766`.
+2. Configure seu proxy/túnel HTTPS para encaminhar para `http://127.0.0.1:8766/webhook`.
+3. No painel Meta Developers, informe essa URL pública com o caminho `/webhook` e o mesmo `verify_token` definido acima.
+4. Inscreva o app no campo de webhook `messages` do WhatsApp Business Account.
+5. Envie uma mensagem de texto a partir de um número presente em `allowed_senders`.
+
+O endpoint valida o desafio GET, verifica a assinatura POST `X-Hub-Signature-256` com o App Secret, limita o tamanho do payload e deduplica IDs recentes de mensagens. Eventos não-textuais e remetentes não autorizados são ignorados. O listener responde rapidamente à Meta e processa a mensagem em segundo plano.
+
+### 4. Iniciar e diagnosticar
+
+```bash
+python3 ares.py --cli
+```
+
+Ou inicie a GUI como de costume. A integração permanece desligada se `whatsapp.enabled` for `false`. Se a porta estiver ocupada, escolha outra em `whatsapp.port` e ajuste o proxy.
+
+**Limites e segurança:** o computador precisa estar ligado e acessível pelo webhook. As regras de janela de atendimento e modelos de mensagem da Meta continuam valendo; para iniciar conversas fora da janela de atendimento permitida, pode ser necessário usar um template aprovado. A integração atual processa apenas texto e não baixa mídia. Os comandos perigosos continuam sujeitos ao mecanismo de confirmação do núcleo, mas use somente números autorizados e proteja o computador e as credenciais.
+
 ## Segurança
 
 - Comandos perigosos (desligar, reiniciar, bloquear, fechar app, escrever
