@@ -51,6 +51,12 @@ jobs:
       - name: Generate Flutter platform projects
         run: flutter create --project-name ares7_mobile --platforms=android,ios .
 
+      # flutter create generates a template test that references MyApp, but
+      # this app's actual root widget is AresMobileApp. Remove the unused
+      # scaffold test until project-specific widget tests are added.
+      - name: Remove generated placeholder test
+        run: rm -f test/widget_test.dart
+
       - name: Resolve dependencies
         run: flutter pub get
 
