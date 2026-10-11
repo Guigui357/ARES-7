@@ -1,54 +1,71 @@
 # ARES-7 Mobile (Android + iOS)
 
-Cross-platform mobile client foundation for the ARES-7 project. This is an additive mobile app; it does not replace or rewrite the existing Python/Linux application.
+Cross-platform Flutter app for the ARES-7 project. This is additive and does not replace the existing Python/Linux application.
 
-## Goals
+## Current implementation
 
-- Run language-model inference on-device, with no ARES-7 server and no paid API.
-- Work on Android and iOS from one Flutter UI.
-- Offer offline speech recognition and offline speech synthesis.
-- Let users import/download a compatible model and keep chats on-device.
+- Flutter chat UI.
+- Local GGUF file import into the app's private documents directory.
+- llama_cpp_dart 0.9.x integration, using llama.cpp for on-device token generation.
+- A bounded 2,048-token context and a maximum of 192 generated tokens per reply.
+- No ARES-7 server and no paid inference API.
+- Offline speech-to-text and text-to-speech are **not integrated yet**.
 
-## Current status
+The source code has been added to the feature branch, but this environment did not run Flutter dependency resolution or build Android/iOS binaries. Treat this as an integration under development, not a verified store-ready release.
 
-**UI prototype only — not yet an offline AI release.** The Flutter shell currently provides the ARES-7 chat layout and clearly labels the model as not configured. It does not pretend to generate AI answers or record/process speech yet. Native inference and speech engines must be integrated and tested before distributing an APK/IPA.
+## Requirements
 
-## Build the UI prototype
+- Flutter / Dart compatible with Dart 3.9 or newer.
+- Android: Android SDK and a physical arm64 Android device recommended.
+- iOS: macOS + Xcode and an iPhone for device testing.
+- A compatible, instruction-tuned GGUF model. Models are not bundled in the app; choose a quantized model that fits the phone's RAM and storage.
 
-Install Flutter stable and the Android SDK (Android), or Xcode on macOS (iOS), then:
+## Android
+
+The package supplies the Android CPU native library through Flutter's native-assets hook. From the repository root:
 
 ```sh
 cd mobile
 flutter pub get
+flutter analyze
 flutter run
 ```
 
-Build Android APK:
+Build a release APK:
 
 ```sh
 flutter build apk --release
 ```
 
-Build iOS (requires macOS + Xcode):
+The first version uses CPU inference on Android for broad compatibility. Larger models can be slow or exhaust memory; start with a small Q4-quantized model and close other memory-heavy apps.
 
-```sh
-flutter build ios --release
-```
+## iOS native framework setup
 
-## Proposed runtime architecture
+The Dart integration calls LlamaEngine.spawnFromProcess on iOS. iOS must embed the native llama.xcframework before inference can run; adding the Dart dependency alone does not embed that framework.
 
-- **LLM:** llama.cpp compiled as a native library for Android (arm64-v8a) and iOS (arm64), using a small quantized GGUF model. Use a bounded context and one inference worker to limit RAM and heat.
-- **Speech-to-text:** an offline engine such as whisper.cpp, with a small model downloaded explicitly by the user.
-- **Text-to-speech:** an offline voice engine such as Piper, provided compatible mobile native builds and licenses are verified.
-- **Storage:** app-private files for models and SQLite for chat history; no server required.
-- **Network:** only optional model downloads and updates. Once assets are installed, chat and speech processing should work in airplane mode.
+1. On a Mac, obtain the matching llama_cpp_dart 0.9.x source/release and build its Apple framework using its documented tool/build_apple_xcframework.sh process.
+2. In Xcode, open mobile/ios/Runner.xcworkspace.
+3. Add llama.xcframework to the Runner target and select **Embed & Sign** where Xcode offers that option.
+4. Run `cd mobile && flutter pub get && flutter build ios`, then install on a physical iPhone.
+5. Verify model import and generation in airplane mode. The iOS simulator is not a substitute for a physical-device memory/performance test.
 
-Do not bundle large model files in the app package by default. Show model size, free-space needs, license, and minimum recommended RAM before downloading. Use platform-native model storage and allow deletion.
+The exact framework artifact must match the package's pinned llama.cpp ABI. Do not copy arbitrary libllama binaries from another build.
 
-## Acceptance tests before calling it functional
+## Importing a model
 
-1. Launch and chat with a downloaded GGUF model in airplane mode.
-2. Confirm no remote inference requests occur.
-3. Record speech, transcribe offline, generate a response locally, and speak it offline.
-4. Test app backgrounding, interruption, low storage, missing model, and model load failures.
-5. Test Android and iPhone separately; a successful Android build does not prove iOS works.
+Launch the app and tap the folder/model button. Choose a local .gguf file. The app copies it into its private ares_models directory and loads it. The model stays on the device and can be removed by deleting app data (a model-management/delete UI is still to be added).
+
+Prefer a small instruction-tuned Q4 GGUF model. The app currently sets a 2,048-token context and 192-token reply limit to constrain memory use. Actual RAM requirements vary by model and phone.
+
+## Privacy and network behavior
+
+Inference is performed by llama.cpp on-device. This integration does not send prompts to a server or paid API. Importing a model uses the system file picker; no model download feature is included yet. Once a model is on the device, text generation should not require a network connection.
+
+## Remaining work before release
+
+- Complete the iOS XCFramework integration and verify it on a physical iPhone.
+- Run flutter pub get, flutter analyze, and Android/iOS release builds in CI.
+- Test several supported GGUF architectures/chat templates; models vary in template compatibility.
+- Add cancellation, unload/switch model, model deletion, storage checks, and chat persistence.
+- Integrate offline speech-to-text (e.g. whisper.cpp) and offline speech synthesis (e.g. a compatible Piper mobile build).
+- Verify airplane-mode behavior, thermal throttling, low-memory handling, app lifecycle, and licensing of each model/voice.
