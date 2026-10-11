@@ -198,7 +198,7 @@ class _AresChatScreenState extends State<AresChatScreen> {
               const Text('Estado dos componentes',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               const SizedBox(height: 18),
-              _StatusRow(label: 'Interface móvel', value: 'Disponível', ready: true),
+              const _StatusRow(label: 'Interface móvel', value: 'Disponível', ready: true),
               _StatusRow(
                 label: 'Motor GGUF / llama.cpp',
                 value: _ready ? 'Carregado' : 'Aguardando modelo',
