@@ -10,6 +10,7 @@ CELULAR/OUTRO PC -> HTTP -> ARES7 SERVER -> CORE
 """
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import threading
@@ -42,10 +43,16 @@ def make_handler(ares, token: str):
 
         # ---- auth -----------------------------------------------------------------
         def _authorized(self) -> bool:
-            if self.headers.get("X-Ares7-Token", "") == token:
+            # Nunca autoriza requisições se o servidor estiver sem um token válido.
+            if not token or token == "troque-este-token":
+                return False
+            supplied = self.headers.get("X-Ares7-Token", "")
+            if hmac.compare_digest(supplied.encode("utf-8"), token.encode("utf-8")):
                 return True
+            # Mantido por compatibilidade com clientes antigos; prefira o cabeçalho.
             query = parse_qs(urlparse(self.path).query)
-            return query.get("token", [""])[0] == token
+            supplied = query.get("token", [""])[0]
+            return hmac.compare_digest(supplied.encode("utf-8"), token.encode("utf-8"))
 
         def _reject(self) -> None:
             self.send_response(401)
@@ -185,12 +192,17 @@ class RemoteServer:
         self.ares = ares
         self.host = str(cfg.get("host", "127.0.0.1"))
         self.port = int(cfg.get("port", 8765))
-        self.token = str(cfg.get("token", ""))
+        self.token = str(cfg.get("token", "")).strip()
         self._httpd: ThreadingHTTPServer | None = None
 
     def start(self) -> bool:
         if not self.token or self.token == "troque-este-token":
-            warn(TAG, "token padrao/vazio! Defina remote.token no config.json antes de expor na LAN.")
+            warn(
+                TAG,
+                "servidor remoto nao iniciado: token vazio ou padrao. "
+                "Defina um token forte em remote.token no config.json.",
+            )
+            return False
         handler = make_handler(self.ares, self.token)
         try:
             self._httpd = ThreadingHTTPServer((self.host, self.port), handler)
