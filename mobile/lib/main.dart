@@ -90,13 +90,24 @@ class _AresChatScreenState extends State<AresChatScreen> {
         throw Exception('Não foi possível acessar o caminho do arquivo selecionado.');
       }
 
-      final documents = await getApplicationDocumentsDirectory();
-      final modelDirectory = Directory('${documents.path}/ares_models');
-      await modelDirectory.create(recursive: true);
       final safeName = picked.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
-      final destination = File('${modelDirectory.path}/$safeName');
-      if (File(sourcePath).absolute.path != destination.absolute.path) {
-        await File(sourcePath).copy(destination.path);
+
+      // Prefer copying the model into app storage, but don't make loading
+      // depend on path_provider returning a documents directory. Some Android
+      // devices/file-picker providers can fail to resolve that path; the
+      // selected file path is still usable for the current import session.
+      var modelPath = sourcePath;
+      try {
+        final documents = await getApplicationDocumentsDirectory();
+        final modelDirectory = Directory('${documents.path}/ares_models');
+        await modelDirectory.create(recursive: true);
+        final destination = File('${modelDirectory.path}/$safeName');
+        if (File(sourcePath).absolute.path != destination.absolute.path) {
+          await File(sourcePath).copy(destination.path);
+        }
+        modelPath = destination.path;
+      } catch (_) {
+        // Fall back to the path provided by FilePicker.
       }
 
       // Release the previous model before loading another one to avoid
@@ -110,7 +121,7 @@ class _AresChatScreenState extends State<AresChatScreen> {
         await old.dispose();
       }
 
-      candidate = await GgufRuntime.load(destination.path);
+      candidate = await GgufRuntime.load(modelPath);
       if (!mounted) {
         await candidate.dispose();
         return;
