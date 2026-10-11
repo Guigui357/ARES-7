@@ -67,6 +67,14 @@ def maybe_start_remote(ares, args) -> None:
         ares.remote.start()
 
 
+def maybe_start_whatsapp(ares) -> None:
+    """Inicia o webhook oficial somente quando whatsapp.enabled=true."""
+    if ares.config.get("whatsapp", "enabled", False):
+        from whatsapp.cloud_api import WhatsAppCloudAPI
+        ares.whatsapp = WhatsAppCloudAPI(ares, ares.config["whatsapp"])
+        ares.whatsapp.start()
+
+
 def run_status(ares) -> int:
     st = ares.collect_status()
     gb = 1024 ** 3
@@ -186,6 +194,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ares = make_ares(args)
     maybe_start_remote(ares, args)
+    maybe_start_whatsapp(ares)
     if args.status:
         return run_status(ares)
     if args.cli:

@@ -2,7 +2,7 @@
 from PyInstaller.utils.hooks import collect_submodules
 
 APP = "ARES-7"
-LOCAL_PACKAGES = ["core", "audio", "stt", "llm", "tts", "tools", "remote", "gui"]
+LOCAL_PACKAGES = ["core", "audio", "stt", "llm", "tts", "tools", "remote", "whatsapp", "gui"]
 hiddenimports = []
 for package in LOCAL_PACKAGES:
     hiddenimports += collect_submodules(package)
