@@ -2,41 +2,55 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ARES-7</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#02060d">
+<meta name="description" content="Interface móvel do assistente ARES-7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARES-7">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
 <link rel="stylesheet" href="/style.css">
+<title>ARES-7 Mobile</title>
 </head>
 <body>
 <header>
-  <h1>A R E S - 7</h1>
-  <span id="state" class="state">—</span>
+  <div class="brand"><span class="orb" aria-hidden="true">A7</span><div><h1>ARES-7</h1><small>ASSISTENTE PESSOAL</small></div></div>
+  <span id="state" class="state" aria-live="polite">DESCONECTADO</span>
 </header>
 
-<section id="token-row">
-  <input id="token" type="password" placeholder="token de acesso" autocomplete="off">
-  <button id="save-token">OK</button>
+<section id="token-row" aria-label="Conexão segura">
+  <input id="token" type="password" placeholder="Token de acesso" autocomplete="current-password" aria-label="Token de acesso">
+  <button id="save-token">CONECTAR</button>
 </section>
+<p id="connection-note" class="hint">Conecte-se ao ARES-7 no notebook usando a mesma rede Wi-Fi.</p>
 
-<main id="chat"></main>
+<main id="chat" aria-live="polite" aria-label="Conversa com ARES-7">
+  <div class="welcome"><div class="welcome-mark">A7</div><strong>Sistema pronto.</strong><p>Conecte-se ao notebook e envie uma mensagem para começar.</p></div>
+</main>
 
-<section id="controls">
-  <button id="mic" class="big">🎤 FALAR</button>
+<section id="controls" aria-label="Controles do chat">
+  <button id="mic" class="big" type="button">🎤 MICROFONE DO NOTEBOOK</button>
+  <button id="dictate" class="secondary" type="button">🎙️ DITAR NO CELULAR</button>
   <div class="text-row">
-    <input id="text" type="text" placeholder="Digite um comando..." autocomplete="off">
-    <button id="send">ENVIAR</button>
-    <button id="clear">LIMPAR</button>
+    <input id="text" type="text" placeholder="Mensagem para o ARES-7…" autocomplete="off" enterkeyhint="send" aria-label="Mensagem">
+    <button id="send" type="button" aria-label="Enviar mensagem">➤</button>
   </div>
+  <div class="action-row">
+    <button id="clear" class="secondary" type="button">LIMPAR CONTEXTO</button>
+    <button id="install" class="secondary" type="button" hidden>INSTALAR APP</button>
+  </div>
+  <p id="feedback" class="hint" role="status"></p>
 </section>
 
-<section id="status">
+<section id="status" aria-label="Estado do notebook">
   <div>CPU <b id="st-cpu">--</b></div>
   <div>RAM <b id="st-ram">--</b></div>
-  <div>MIC <b id="st-mic">--</b></div>
   <div>WHISPER <b id="st-whisper">--</b></div>
   <div>QWEN <b id="st-qwen">--</b></div>
   <div>PIPER <b id="st-piper">--</b></div>
 </section>
-
-<script src="/app.js"></script>
+<script src="/app.js" defer></script>
 </body>
 </html>
