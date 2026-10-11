@@ -22,9 +22,16 @@ from core.logs import log, warn
 TAG = "REMOTE"
 
 WEB_DIR = os.path.join(PROJECT_DIR, "web")
-CONTENT_TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript",
-                 ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml"}
-
+CONTENT_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webmanifest": "application/manifest+json",
+    ".json": "application/json; charset=utf-8",
+    ".ico": "image/x-icon",
+}
 
 def make_handler(ares, token: str):
     class Handler(BaseHTTPRequestHandler):
@@ -67,7 +74,15 @@ def make_handler(ares, token: str):
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             path = parsed.path
-            if path == "/" or path.startswith("/app.") or path.startswith("/style"):
+            if path in (
+                "/",
+                "/index.html",
+                "/app.js",
+                "/style.css",
+                "/manifest.webmanifest",
+                "/sw.js",
+                "/icon.svg",
+            ):
                 self._serve_static(path)
                 return
             if not self._authorized():
