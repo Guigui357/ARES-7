@@ -99,8 +99,18 @@ class _AresChatScreenState extends State<AresChatScreen> {
         await File(sourcePath).copy(destination.path);
       }
 
-      candidate = await GgufRuntime.load(destination.path);
+      // Release the previous model before loading another one to avoid
+      // temporarily holding two large GGUF models in RAM.
       final old = _runtime;
+      if (old != null) {
+        setState(() {
+          _runtime = null;
+          _modelName = null;
+        });
+        await old.dispose();
+      }
+
+      candidate = await GgufRuntime.load(destination.path);
       if (!mounted) {
         await candidate.dispose();
         return;
@@ -113,7 +123,6 @@ class _AresChatScreenState extends State<AresChatScreen> {
           isUser: false,
         ));
       });
-      await old?.dispose();
     } catch (e) {
       await candidate?.dispose();
       if (mounted) setState(() => _error = 'Falha ao carregar o GGUF: $e');
