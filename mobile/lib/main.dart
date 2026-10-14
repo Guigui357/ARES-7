@@ -96,24 +96,29 @@ class _AresChatScreenState extends State<AresChatScreen> {
         '_',
       );
       final destination = File('${modelDirectory.path}/$safeName');
-      final stream = picked.readStream;
-
-      if (stream != null) {
-        final sink = destination.openWrite();
-        try {
-          await sink.addStream(stream);
-        } finally {
-          await sink.close();
-        }
-      } else {
-        final sourcePath = picked.path;
-        if (sourcePath == null) {
+      // Prefer a real filesystem path when the Android picker provides one.
+      // Some provider-backed read streams can be closed by the picker before
+      // the full copy finishes, causing FileSystemException: File closed.
+      final sourcePath = picked.path;
+      if (sourcePath != null &&
+          File(sourcePath).absolute.path != destination.absolute.path) {
+        await File(sourcePath).copy(destination.path);
+      } else if (sourcePath == null) {
+        final stream = picked.readStream;
+        if (stream == null) {
           throw Exception(
-            'O Android não forneceu acesso ao arquivo GGUF.',
+            'O Android não forneceu caminho nem fluxo de leitura para o GGUF.',
           );
         }
-        if (File(sourcePath).absolute.path != destination.absolute.path) {
-          await File(sourcePath).copy(destination.path);
+
+        final sink = destination.openWrite();
+        try {
+          await for (final chunk in stream) {
+            sink.add(chunk);
+          }
+          await sink.flush();
+        } finally {
+          await sink.close();
         }
       }
 
