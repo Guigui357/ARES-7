@@ -60,6 +60,68 @@ class _AresChatScreenState extends State<AresChatScreen> {
   bool get _ready => _runtime != null;
 
   @override
+  void initState() {
+    super.initState();
+    _restoreSavedModel();
+  }
+
+  /// Reopen the model copied into the app's private documents directory.
+  /// This directory survives normal app restarts (but not uninstall/clear-data).
+  Future<void> _restoreSavedModel() async {
+    if (_loadingModel || _runtime != null) return;
+    setState(() {
+      _loadingModel = true;
+      _error = null;
+    });
+
+    GgufRuntime? candidate;
+    try {
+      final documents = await getApplicationDocumentsDirectory();
+      final modelDirectory = Directory('${documents.path}/ares_models');
+      if (!await modelDirectory.exists()) return;
+
+      final models = <File>[];
+      await for (final entity in modelDirectory.list(followLinks: false)) {
+        if (entity is File && entity.path.toLowerCase().endsWith('.gguf')) {
+          try {
+            if (await entity.length() > 0) models.add(entity);
+          } on FileSystemException {
+            // Ignore incomplete or inaccessible files and try another model.
+          }
+        }
+      }
+      if (models.isEmpty) return;
+
+      models.sort((a, b) => b
+          .lastModifiedSync()
+          .compareTo(a.lastModifiedSync()));
+      final savedModel = models.first;
+      candidate = await GgufRuntime.load(savedModel.path);
+      if (!mounted) {
+        await candidate.dispose();
+        return;
+      }
+      setState(() {
+        _runtime = candidate;
+        _modelName = savedModel.uri.pathSegments.last;
+        _messages.add(ChatMessage(
+          text: 'Modelo $_modelName restaurado do armazenamento local.',
+          isUser: false,
+        ));
+      });
+    } catch (e) {
+      await candidate?.dispose();
+      if (mounted) {
+        setState(() {
+          _error = 'Não foi possível reabrir o modelo salvo. Toque em Modelo para importá-lo novamente. Detalhes: $e';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _loadingModel = false);
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _scrollController.dispose();
