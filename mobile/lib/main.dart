@@ -81,22 +81,45 @@ class _AresChatScreenState extends State<AresChatScreen> {
         allowedExtensions: const ['gguf'],
         allowMultiple: false,
         withData: false,
+        withReadStream: true,
       );
       if (result == null || result.files.isEmpty) return;
 
       final picked = result.files.single;
-      final sourcePath = picked.path;
-      if (sourcePath == null) {
-        throw Exception('Não foi possível acessar o caminho do arquivo selecionado.');
-      }
 
       final documents = await getApplicationDocumentsDirectory();
       final modelDirectory = Directory('${documents.path}/ares_models');
       await modelDirectory.create(recursive: true);
-      final safeName = picked.name.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+      final safeName = picked.name.replaceAll(
+        RegExp(r'[^a-zA-Z0-9._-]'),
+        '_',
+      );
       final destination = File('${modelDirectory.path}/$safeName');
-      if (File(sourcePath).absolute.path != destination.absolute.path) {
-        await File(sourcePath).copy(destination.path);
+      final stream = picked.readStream;
+
+      if (stream != null) {
+        final sink = destination.openWrite();
+        try {
+          await sink.addStream(stream);
+        } finally {
+          await sink.close();
+        }
+      } else {
+        final sourcePath = picked.path;
+        if (sourcePath == null) {
+          throw Exception(
+            'O Android não forneceu acesso ao arquivo GGUF.',
+          );
+        }
+        if (File(sourcePath).absolute.path != destination.absolute.path) {
+          await File(sourcePath).copy(destination.path);
+        }
+      }
+
+      if (!await destination.exists() ||
+          await destination.length() == 0) {
+        throw Exception('A cópia do GGUF falhou ou ficou vazia.');
       }
 
       // Release the previous model before loading another one to avoid
