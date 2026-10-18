@@ -77,8 +77,10 @@ class _AresChatScreenState extends State<AresChatScreen> {
     GgufRuntime? candidate;
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const ['gguf'],
+        // iOS may not recognize .gguf as a selectable document type.
+        // Allow choosing any file there, then validate its extension below.
+        type: Platform.isIOS ? FileType.any : FileType.custom,
+        allowedExtensions: Platform.isIOS ? null : const ['gguf'],
         allowMultiple: false,
         withData: false,
         withReadStream: true,
@@ -86,6 +88,9 @@ class _AresChatScreenState extends State<AresChatScreen> {
       if (result == null || result.files.isEmpty) return;
 
       final picked = result.files.single;
+      if (!picked.name.toLowerCase().endsWith('.gguf')) {
+        throw Exception('Selecione um arquivo com extensão .gguf.');
+      }
 
       final documents = await getApplicationDocumentsDirectory();
       final modelDirectory = Directory('${documents.path}/ares_models');
