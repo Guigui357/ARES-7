@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -58,6 +59,62 @@ class _AresChatScreenState extends State<AresChatScreen> {
   String? _error;
 
   bool get _ready => _runtime != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSelectedModel();
+  }
+
+  Future<File> _selectionFile() async {
+    final documents = await getApplicationDocumentsDirectory();
+    final modelDirectory = Directory('${documents.path}/ares_models');
+    await modelDirectory.create(recursive: true);
+    return File('${modelDirectory.path}/selected_model.json');
+  }
+
+  Future<void> _restoreSelectedModel() async {
+    if (_loadingModel || _runtime != null) return;
+    setState(() {
+      _loadingModel = true;
+      _error = null;
+    });
+    GgufRuntime? candidate;
+    try {
+      final selectionFile = await _selectionFile();
+      if (!await selectionFile.exists()) return;
+      final decoded = jsonDecode(await selectionFile.readAsString());
+      if (decoded is! Map<String, dynamic> || decoded['path'] is! String) {
+        await selectionFile.delete();
+        return;
+      }
+      final modelPath = decoded['path'] as String;
+      final modelFile = File(modelPath);
+      if (!await modelFile.exists() || await modelFile.length() == 0) {
+        await selectionFile.delete();
+        return;
+      }
+      candidate = await GgufRuntime.load(modelPath);
+      if (!mounted) {
+        await candidate.dispose();
+        return;
+      }
+      setState(() {
+        _runtime = candidate;
+        _modelName = decoded['name'] is String
+            ? decoded['name'] as String
+            : modelFile.uri.pathSegments.last;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Não foi possível restaurar o modelo salvo. Importe-o novamente se necessário. ($e)';
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _loadingModel = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -143,6 +200,12 @@ class _AresChatScreenState extends State<AresChatScreen> {
         await candidate.dispose();
         return;
       }
+      final selectionFile = await _selectionFile();
+      await selectionFile.writeAsString(jsonEncode({
+        'path': destination.path,
+        'name': safeName,
+      }));
+
       setState(() {
         _runtime = candidate;
         _modelName = safeName;
