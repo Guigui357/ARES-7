@@ -19,15 +19,13 @@ class GgufRuntime {
       throw ArgumentError('Selecione um arquivo .gguf válido.');
     }
 
-    final engine = Platform.isIOS
-        ? await LlamaEngine.spawnFromProcess(
-            modelParams: ModelParams(path: modelPath, gpuLayers: 99),
-            contextParams: const ContextParams(nCtx: 2048),
-          )
-        : await LlamaEngine.spawn(
-            modelParams: ModelParams(path: modelPath, gpuLayers: 0),
-            contextParams: const ContextParams(nCtx: 2048),
-          );
+    // Start with CPU-only inference on both platforms for compatibility.
+    // Excessive GPU offload can make native model initialization fail on iOS
+    // depending on the device and the llama.cpp build.
+    final engine = await LlamaEngine.spawn(
+      modelParams: ModelParams(path: modelPath, gpuLayers: 0),
+      contextParams: const ContextParams(nCtx: 2048),
+    );
 
     try {
       final chat = await engine.createChat();
