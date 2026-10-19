@@ -108,6 +108,29 @@ Configuracao em `config.json`, secao `daemon`:
 Variaveis de ambiente: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
 `ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
 
+## Interfaces
+
+- **GUI (Tkinter)** — `gui/app.py`. HUD com o nucleo animado, telemetria,
+  e uma barra de confirmacao com botoes SIM/NAO para acoes de risco.
+- **Web (celular)** — `web/`. PWA servida pelo `--remote`. Bolhas de conversa,
+  markdown, indicador de estado, atalhos e painel (Sistema/Notas/Memoria/Daemon).
+  Aceita `?token=...` na URL e remove o token da barra de endereco depois.
+- Ambas usam o mesmo nucleo: cada interface se inscreve nos eventos com
+  `ares.add_listener(callback)` e se desinscreve com `remove_listener`.
+  Nunca mais substitua `ares.emit` — isso fazia uma interface engolir os
+  eventos da outra.
+
+Endpoints do servidor remoto:
+
+| Rota | Devolve |
+|---|---|
+| `GET /api/ping` | nome e versao |
+| `GET /api/status` | CPU, RAM, whisper, llm, piper, microfone |
+| `GET /api/notes` | notas salvas |
+| `GET /api/memory` | fatos da memoria permanente |
+| `GET /api/daemon` | acao pendente, log e config do daemon |
+| `POST /api/chat` | resposta do ARES-7 (409 se o nucleo esta ocupado) |
+
 ## Releases (PyInstaller)
 
 `.github/workflows/release-pyinstaller.yml` compila com PyInstaller, roda a

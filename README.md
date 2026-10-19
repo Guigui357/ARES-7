@@ -112,6 +112,29 @@ Configuracao em `config.json`, secao `daemon`:
 Variaveis: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
 `ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
 
+## Interface
+
+Duas interfaces, mesmo núcleo:
+
+- **GUI (Tkinter)** — HUD com o núcleo animado, telemetria (CPU/RAM/temp/bateria),
+  botões de microfone e o painel de confirmação para ações de risco.
+- **Web (celular)** — PWA em `web/`, servida pelo `--remote`. Conversa com bolhas,
+  markdown, indicador de estado, atalhos de comando e um painel com Sistema,
+  Notas, Memória e Daemon.
+
+Para abrir no celular:
+
+```bash
+python3 ares.py --remote
+```
+
+E acesse `http://<ip-do-notebook>:8765`. Dá para abrir direto com o token já
+embutido na URL: `http://<ip>:8765/?token=SEU_TOKEN` (o token some da barra de
+endereço depois).
+
+Vários clientes (celular, GUI, CLI) conversam com o mesmo núcleo ao mesmo
+tempo: cada interface se inscreve nos eventos e nenhuma engole a da outra.
+
 ## Releases (PyInstaller)
 
 O workflow `.github/workflows/release-pyinstaller.yml` compila o ARES-7 com

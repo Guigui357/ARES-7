@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview — ARES-7 web</title>
+<link rel="stylesheet" href="../web/style.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="orb" data-state="ready"><span class="orb-ring"></span><span class="orb-pulse"></span><span class="orb-core"></span></div>
+    <div class="brand-text"><h1>ARES-7</h1><small>ASSISTENTE LOCAL</small></div>
+  </div>
+  <button class="icon-btn" aria-label="Abrir painel">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+
+<main id="chat">
+  <article class="msg user">
+    <div class="msg-avatar">EU</div>
+    <div class="msg-col">
+      <div class="msg-head"><span>VOCÊ</span><span>20:14</span></div>
+      <div class="msg-body">verifique o sistema</div>
+    </div>
+  </article>
+
+  <article class="msg ares">
+    <div class="msg-avatar">A7</div>
+    <div class="msg-col">
+      <div class="msg-head"><span>ARES-7</span><span>20:14</span><button class="msg-copy">COPIAR</button></div>
+      <div class="msg-body"><p>Sistema:</p><ul><li><strong>CPU</strong> 12%</li><li><strong>RAM</strong> 1.4 / 8.2 GB</li><li><strong>Disco</strong> 59 / 144 GB</li><li><strong>Temp</strong> 48°C</li></ul><p>Tudo certo. Use <code>--diagnose</code> para o relatório completo.</p></div>
+    </div>
+  </article>
+
+  <article class="msg user">
+    <div class="msg-avatar">EU</div>
+    <div class="msg-col">
+      <div class="msg-head"><span>VOCÊ</span><span>20:15</span></div>
+      <div class="msg-body">abra o navegador</div>
+    </div>
+  </article>
+
+  <article class="msg ares">
+    <div class="msg-avatar">A7</div>
+    <div class="msg-col">
+      <div class="msg-head"><span>ARES-7</span><span>20:15</span><button class="msg-copy">COPIAR</button></div>
+      <div class="msg-body"><p>Não encontrei o Firefox instalado. Instale com:</p><pre><code>sudo apt install firefox-esr</code></pre></div>
+    </div>
+  </article>
+
+  <article class="msg ares">
+    <div class="msg-avatar">A7</div>
+    <div class="msg-col">
+      <div class="msg-head"><span>ARES-7</span><span>20:15</span></div>
+      <div class="msg-body"><span class="typing"><i></i><i></i><i></i></span></div>
+    </div>
+  </article>
+</main>
+
+<div class="chips">
+  <button class="chip">Status do sistema</button>
+  <button class="chip">Calcular</button>
+  <button class="chip">Nova nota</button>
+  <button class="chip">Minhas notas</button>
+</div>
+
+<section id="controls">
+  <div class="mic-row">
+    <button class="btn btn-mic">
+      <svg class="mic-ico" viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg>
+      <span class="mic-label">MICROFONE DO NOTEBOOK</span>
+    </button>
+    <button class="btn btn-ghost">
+      <svg class="mic-ico" viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/><path d="M3 4l18 16"/></svg>
+      <span class="mic-label">DITAR</span>
+    </button>
+  </div>
+  <div class="text-row">
+    <input type="text" placeholder="Mensagem para o ARES-7…">
+    <button class="btn btn-send"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+  </div>
+</section>
+
+<div class="scrim"></div>
+<aside class="panel is-open">
+  <div class="panel-head"><h2>PAINEL</h2>
+    <button class="icon-btn"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <nav class="tabs">
+    <button class="tab is-active">SISTEMA</button><button class="tab">NOTAS</button>
+    <button class="tab">MEMÓRIA</button><button class="tab">DAEMON</button>
+  </nav>
+  <div class="panel-body">
+    <section class="tab-pane is-active">
+      <div class="gauge"><div class="gauge-head"><span>CPU</span><b>12%</b></div><div class="bar"><i style="width:12%"></i></div></div>
+      <div class="gauge"><div class="gauge-head"><span>RAM</span><b>1.4/8.2 GB</b></div><div class="bar"><i style="width:17%"></i></div></div>
+      <div class="chips-state">
+        <span class="pill ok">WHISPER <b>OK</b></span>
+        <span class="pill ok">QWEN <b>OK</b></span>
+        <span class="pill bad">PIPER <b>OFF</b></span>
+      </div>
+      <p class="hint">qwen2.5-3b · default · 48°C</p>
+    </section>
+  </div>
+</aside>
+</body>
+</html>
