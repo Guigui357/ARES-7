@@ -10,6 +10,7 @@ sistema sao simuladas.
 """
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import sys
@@ -82,6 +83,20 @@ class TestDeteccao(unittest.TestCase):
     def tearDown(self) -> None:
         remove_pending()
 
+    def _spy(self, module_path: str, name: str) -> list:
+        """Espiona uma funcao e devolve a lista de chamadas. Restaurada no fim."""
+        module = importlib.import_module(module_path)
+        original = getattr(module, name)
+        calls: list = []
+
+        def wrapper(*args, **kwargs):
+            calls.append((args, kwargs))
+            return "spy"
+
+        setattr(module, name, wrapper)
+        self.addCleanup(setattr, module, name, original)
+        return calls
+
     def _reply(self, text: str) -> str:
         return self.engine.run_autonomous(text).splitlines()[0]
 
@@ -120,17 +135,22 @@ class TestDeteccao(unittest.TestCase):
         self.assertIn("Timer", self._reply("timer de 5 minutos"))
 
     def test_busca_arquivo_vence_busca_web(self):
-        # "busque arquivo X" e busca local, nao web. A resposta depende de o
-        # ambiente ter o arquivo, entao o que importa e o tipo da acao.
-        reply = self._reply("busque arquivo AGENTS.md")
-        self.assertNotIn("pesquisa no Google", reply)
-        self.assertTrue("arquivo" in reply.lower())
+        # "busque arquivo X" e busca local, nao web. Verificamos qual
+        # ferramenta foi chamada, e nao a mensagem (que depende de o arquivo
+        # existir e de o xdg-open estar instalado).
+        arquivo = self._spy("tools.files", "file_search")
+        web = self._spy("tools.apps", "web_search")
+        self._reply("busque arquivo AGENTS.md")
+        self.assertTrue(arquivo, "deveria buscar o arquivo localmente")
+        self.assertFalse(web, "nao deveria cair na busca web")
 
     def test_busca_web_mantida(self):
         # "pesquise arquivos de poker" continua sendo busca na web.
-        reply = self._reply("pesquise arquivos de poker")
-        self.assertTrue("pesquisa" in reply.lower() or "xdg-open" in reply.lower())
-        self.assertNotIn("Nenhum arquivo parecido", reply)
+        arquivo = self._spy("tools.files", "file_search")
+        web = self._spy("tools.apps", "web_search")
+        self._reply("pesquise arquivos de poker")
+        self.assertTrue(web, "deveria fazer busca web")
+        self.assertFalse(arquivo, "nao deveria buscar arquivo local")
 
     def test_pasta_explicita(self):
         self.assertIn("/tmp", self._reply("liste a pasta /tmp"))
