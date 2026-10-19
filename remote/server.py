@@ -17,7 +17,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from core.config import PROJECT_DIR
+from core.config import ARES7_HOME, PROJECT_DIR, VERSION
 from core.logs import log, warn
 
 TAG = "REMOTE"
@@ -96,7 +96,7 @@ def make_handler(ares, token: str):
                 self._reject()
                 return
             if path == "/api/ping":
-                self._json({"ok": True, "name": "ARES-7", "version": "1.2.1"})
+                self._json({"ok": True, "name": "ARES-7", "version": VERSION})
             elif path == "/api/status":
                 st = ares.collect_status()
                 gb = 1024 ** 3
@@ -116,6 +116,16 @@ def make_handler(ares, token: str):
                 })
             elif path == "/api/devices":
                 self._json({"devices": ares.list_input_devices()})
+            elif path == "/api/notes":
+                self._json({"notes": self._read_notes()})
+            elif path == "/api/memory":
+                facts: list[dict] = []
+                if getattr(ares, "memory", None):
+                    for fact_id, content in ares.memory.list(limit=30):
+                        facts.append({"id": fact_id, "content": content})
+                self._json({"facts": facts})
+            elif path == "/api/daemon":
+                self._json(self._daemon_status())
             else:
                 self._json({"error": "rota desconhecida"}, 404)
 
@@ -132,22 +142,26 @@ def make_handler(ares, token: str):
                     self._json({"error": "texto vazio"}, 400)
                     return
                 replies: list[str] = []
-                old_emit = ares.emit
                 done = threading.Event()
 
                 def capture(kind: str, data) -> None:
-                    old_emit(kind, data)
                     if kind == "ares":
                         replies.append(str(data))
                     if kind == "state" and data in ("READY", "ERROR"):
                         done.set()
 
-                ares.emit = capture
+                # Ouvinte dedicado: nao substitui o emit global, entao a GUI
+                # e outros consumidores continuam recebendo os eventos.
+                ares.add_listener(capture)
                 try:
-                    if ares.run_async(ares.handle_text, text, False):
-                        done.wait(timeout=240)
+                    started = ares.run_async(ares.handle_text, text, False)
+                    if not started:
+                        self._json({"error": "O ARES-7 esta ocupado com outra tarefa. "
+                                             "Tente de novo em instantes."}, 409)
+                        return
+                    done.wait(timeout=240)
                 finally:
-                    ares.emit = old_emit
+                    ares.remove_listener(capture)
                 self._json({"reply": replies[-1] if replies else "", "state": ares.state})
             elif parsed.path == "/api/listen":
                 started = ares.run_async(ares.voice_turn)
@@ -167,12 +181,54 @@ def make_handler(ares, token: str):
                 self._json({"error": "rota desconhecida"}, 404)
 
         # ---- estaticos ---------------------------------------------------------------------
+        def _read_notes(self) -> list[str]:
+            """Le as notas salvas pelo ARES-7."""
+            try:
+                with open(ares.notes_path, "r", encoding="utf-8", errors="replace") as handle:
+                    raw = handle.read()
+            except OSError:
+                return []
+            return [line.strip() for line in raw.splitlines() if line.strip()][-30:]
+
+        def _daemon_status(self) -> dict:
+            """Estado do daemon: pendencias, ultimas linhas do log e config."""
+            pending_path = os.path.join(ARES7_HOME, "autonomous_pending.json")
+            pending = None
+            if os.path.isfile(pending_path):
+                try:
+                    with open(pending_path, "r", encoding="utf-8") as handle:
+                        pending = json.load(handle)
+                except (OSError, ValueError):
+                    pending = None
+
+            log_lines: list[str] = []
+            log_path = os.path.join(ARES7_HOME, "daemon.log")
+            if os.path.isfile(log_path):
+                try:
+                    with open(log_path, "r", encoding="utf-8", errors="replace") as handle:
+                        log_lines = [line.rstrip() for line in handle if line.strip()][-20:]
+                except OSError:
+                    log_lines = []
+
+            return {
+                "pending": pending,
+                "log": log_lines,
+                "enabled": bool(ares.config.get("daemon", "enabled", False)),
+                "interval": ares.config.get("daemon", "interval", 60),
+            }
+
         def _serve_static(self, path: str) -> None:
             if path == "/":
                 path = "/index.html"
             safe = os.path.normpath(path).lstrip("/")
-            full = os.path.join(WEB_DIR, safe)
-            if not full.startswith(WEB_DIR) or not os.path.isfile(full):
+            full = os.path.normpath(os.path.join(WEB_DIR, safe))
+            # commonpath (e nao startswith) impede escapar de web/: um irmao
+            # chamado "web_backup" comecaria com "web" e passaria na comparacao.
+            try:
+                inside = os.path.commonpath([WEB_DIR, full]) == WEB_DIR
+            except ValueError:
+                inside = False
+            if not inside or not os.path.isfile(full):
                 self.send_response(404)
                 self.end_headers()
                 return

@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """Nucleo do ARES7: orquestra AUDIO -> STT -> ROUTER -> LLM -> TTS.
 
-GUI, CLI, servidor remoto e wake word usam TODOS este nucleo. Quem desenha
-a interface define `emit(kind, payload)`:
+GUI, CLI, servidor remoto e wake word usam TODOS este nucleo. Cada interface
+se inscreve nos eventos com `add_listener(callback)` e pode se desinscrever
+com `remove_listener(callback)`.
 
 kinds: state, user_text, user_voice, ares, system, error, mic_level, confirm
 
@@ -14,6 +15,7 @@ from __future__ import annotations
 import os
 import threading
 import traceback
+from typing import Callable
 
 from audio.devices import describe_devices
 from audio.recorder import Recorder, wav_peak
@@ -71,7 +73,8 @@ class Ares7:
         self.busy = threading.Lock()
         self.speak_enabled = True
         self.state = "READY"
-        self.emit = lambda kind, payload: None
+        self._listeners: list[Callable[[str, object], None]] = []
+        self._listeners_lock = threading.Lock()
         self._pending_confirm: tuple[str, object] | None = None
         self._wake_stop = threading.Event()
         self._wake_thread: threading.Thread | None = None
@@ -89,6 +92,33 @@ class Ares7:
         return 99999.0
 
     # ---- helpers -----------------------------------------------------------------
+    def add_listener(self, listener: Callable[[str, object], None]) -> None:
+        """Registra um ouvinte de eventos (GUI, servidor remoto, testes).
+
+        Varios ouvintes convivem sem se atropelar: antes cada interface
+        substituia `self.emit`, e uma acabava engolindo os eventos da outra.
+        """
+        with self._listeners_lock:
+            if listener not in self._listeners:
+                self._listeners.append(listener)
+
+    def remove_listener(self, listener: Callable[[str, object], None]) -> None:
+        """Remove um ouvinte registrado."""
+        with self._listeners_lock:
+            if listener in self._listeners:
+                self._listeners.remove(listener)
+
+    def emit(self, kind: str, payload: object = None) -> None:
+        """Entrega um evento a todos os ouvintes. Nenhum erro de um ouvinte
+        interrompe os demais."""
+        with self._listeners_lock:
+            listeners = list(self._listeners)
+        for listener in listeners:
+            try:
+                listener(kind, payload)
+            except Exception:
+                log_error(TAG, f"ouvinte de evento falhou: {traceback.format_exc()}")
+
     def set_state(self, state: str) -> None:
         self.state = state
         self.emit("state", state)

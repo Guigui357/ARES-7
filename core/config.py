@@ -26,6 +26,10 @@ else:
 HOME = os.path.expanduser("~")
 ARES7_HOME = os.path.join(HOME, ".ares")
 
+# Versao do ARES-7. Fonte unica: ares.py, o servidor remoto e o release
+# do PyInstaller leem daqui, entao nunca divergem.
+VERSION = "1.3.0"
+
 DEFAULTS: dict = {
     "llm": {
         "host": "127.0.0.1",

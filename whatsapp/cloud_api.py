@@ -166,17 +166,17 @@ class WhatsAppCloudAPI:
         # Não disputa o núcleo com uma tarefa local já em andamento.
         if not self.ares.busy.acquire(blocking=False):
             return "Estou ocupado com outra tarefa. Tente novamente em alguns instantes."
-        old_emit = self.ares.emit
         old_speak = self.ares.speak_enabled
         replies: list[str] = []
 
         def capture(kind: str, data):
-            old_emit(kind, data)
             if kind == "ares":
                 replies.append(str(data))
 
+        # Ouvinte dedicado: nao substitui o emit global, entao a GUI e o
+        # servidor remoto continuam recebendo os eventos normalmente.
+        self.ares.add_listener(capture)
         try:
-            self.ares.emit = capture
             self.ares.speak_enabled = False
             self.ares.handle_text(text, from_voice=False)
             return replies[-1] if replies else "Não consegui gerar uma resposta."
@@ -184,7 +184,7 @@ class WhatsAppCloudAPI:
             warn(TAG, f"erro no núcleo ARES-7: {exc!r}")
             return "O ARES-7 encontrou um erro ao processar a mensagem."
         finally:
-            self.ares.emit = old_emit
+            self.ares.remove_listener(capture)
             self.ares.speak_enabled = old_speak
             self.ares.busy.release()
 

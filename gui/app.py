@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime
 import math
+import os
 import queue
 import re
 import threading
@@ -20,6 +21,7 @@ except Exception as _tk_exc:
     tk = None  # type: ignore[assignment]
     TK_IMPORT_ERROR = _tk_exc
 
+from core.config import ARES7_HOME, VERSION
 from core.logs import error as log_error
 
 BG = "#02060d"
@@ -105,7 +107,7 @@ class Ares7GUI:
         self._build_input()
         self._build_statusbar()
 
-        ares.emit = lambda kind, payload: self.events.put((kind, payload))
+        ares.add_listener(lambda kind, payload: self.events.put((kind, payload)))
 
     # ---- construcao --------------------------------------------------------------
     def _build_header(self) -> None:
@@ -282,9 +284,31 @@ class Ares7GUI:
         )
 
     def _build_input(self) -> None:
+        # Barra de confirmacao: aparece so quando ha acao de risco pendente.
+        self.confirm_bar = tk.Frame(self.root, bg=blend(AMBER, BG, 0.12))
+        self.confirm_question = tk.Label(
+            self.confirm_bar,
+            text="",
+            bg=blend(AMBER, BG, 0.12),
+            fg=AMBER,
+            font=(MONO, 9, "bold"),
+            anchor="w",
+            justify="left",
+            wraplength=520,
+        )
+        self.confirm_question.pack(side="left", padx=(10, 6), pady=7, fill="x", expand=True)
+        self.confirm_yes = self._make_button(
+            self.confirm_bar, "SIM", lambda: self._answer_confirm("sim"), GREEN, 5)
+        self.confirm_yes.pack(side="right", padx=(0, 6), pady=7)
+        self.confirm_no = self._make_button(
+            self.confirm_bar, "NÃO", lambda: self._answer_confirm("nao"), RED, 5)
+        self.confirm_no.pack(side="right", padx=(0, 10), pady=7)
+        self.confirm_bar.pack_forget()
+
         # Linha principal
         row = tk.Frame(self.root, bg=BG)
         row.pack(fill="x", padx=12, pady=(0, 3))
+        self.input_row = row
 
         tk.Label(
             row,
@@ -320,7 +344,7 @@ class Ares7GUI:
         self._show_placeholder()
 
         self.mic_button = self._make_button(
-            row, "🎤 MIC", self.on_mic, RED, 7
+            row, "◉ MIC", self.on_mic, RED, 7
         )
         self.mic_button.pack(side="left", padx=(7, 0), ipady=2)
 
@@ -381,6 +405,19 @@ class Ares7GUI:
             ipady=1
         )
 
+        self.notes_button = self._make_button(
+            row2,
+            "NOTES",
+            self.on_notes,
+            CYAN,
+            6
+        )
+        self.notes_button.pack(
+            side="right",
+            padx=(5, 0),
+            ipady=1
+        )
+
     def _make_button(self, parent, text, command, color, width):
         button = tk.Button(
             parent, text=text, command=command, bg=PANEL, fg=color,
@@ -421,6 +458,7 @@ class Ares7GUI:
             ("whisper", "WHISPER"),
             ("llama", "QWEN"),
             ("piper", "PIPER"),
+            ("daemon", "DAEMON"),
         ):
             tk.Label(
                 bar,
@@ -455,6 +493,15 @@ class Ares7GUI:
             side="left",
             padx=10
         )
+
+        self.version_label = tk.Label(
+            bar,
+            text=f"v{VERSION}",
+            bg=PANEL,
+            fg=DIM,
+            font=font,
+        )
+        self.version_label.pack(side="right", padx=(0, 9))
 
         tk.Checkbutton(
             bar,
@@ -494,6 +541,20 @@ class Ares7GUI:
     # ---- acoes -----------------------------------------------------------------------
     def _toggle_tts(self) -> None:
         self.ares.speak_enabled = bool(self.tts_var.get())
+
+    def _show_confirm(self, question: str) -> None:
+        """Exibe a barra de confirmacao para acoes de risco."""
+        self.confirm_question.config(text=str(question))
+        self.confirm_bar.pack(fill="x", padx=12, pady=(4, 0), before=self.input_row)
+        self.confirm_yes.focus_set()
+
+    def _hide_confirm(self) -> None:
+        self.confirm_bar.pack_forget()
+
+    def _answer_confirm(self, word: str) -> None:
+        """Envia 'sim'/'nao' para o nucleo resolver a acao pendente."""
+        self._hide_confirm()
+        self.ares.run_async(self.ares.handle_text, word, False)
 
     def _set_busy(self, busy: bool) -> None:
         state = "disabled" if busy else "normal"
@@ -564,6 +625,33 @@ class Ares7GUI:
         self.chat.config(state="disabled")
         self.append("ok", "Chat e contexto local limpos.")
 
+    def on_notes(self) -> None:
+        """Mostra as notas salvas e o que a memoria do ARES-7 guardou."""
+        def _show() -> None:
+            try:
+                with open(self.ares.notes_path, "r", encoding="utf-8", errors="replace") as handle:
+                    notes = [line.strip() for line in handle if line.strip()]
+            except OSError:
+                notes = []
+            facts: list[str] = []
+            if getattr(self.ares, "memory", None):
+                try:
+                    facts = [content for _fid, content in self.ares.memory.list(limit=8)]
+                except Exception:
+                    facts = []
+            if not notes and not facts:
+                self.events.put(("system", "Nenhuma nota e nada na memoria ainda."))
+                return
+            if notes:
+                self.events.put(("system", "NOTAS"))
+                for note in notes[-8:]:
+                    self.events.put(("ok", "  " + note))
+            if facts:
+                self.events.put(("system", "MEMORIA"))
+                for fact in facts:
+                    self.events.put(("ok", "  " + fact))
+        threading.Thread(target=_show, daemon=True).start()
+
     def on_close(self) -> None:
         self.closing = True
         self.stop_event.set()
@@ -612,6 +700,8 @@ class Ares7GUI:
             self.state = payload
             self._set_busy(payload not in ("READY", "ERROR"))
         elif kind in ("user_text", "user_voice"):
+            # O usuario respondeu (ou mudou de assunto): a barra sai.
+            self._hide_confirm()
             self.append("user", payload)
         elif kind == "ares":
             self.append("ares", payload)
@@ -619,6 +709,7 @@ class Ares7GUI:
             self.append(kind, payload)
         elif kind == "confirm":
             self.append("warn", "CONFIRMAÇÃO NECESSÁRIA: " + str(payload))
+            self._show_confirm(str(payload))
         elif kind == "error":
             self.append("error", payload)
             log_error("GUI", str(payload))
@@ -640,6 +731,10 @@ class Ares7GUI:
         else:
             piper_color = RED
         self.dots["piper"].config(fg=piper_color)
+        # O daemon so roda como processo separado; aqui mostramos se ha
+        # alguma acao pendente de confirmacao.
+        pending = os.path.isfile(os.path.join(ARES7_HOME, "autonomous_pending.json"))
+        self.dots["daemon"].config(fg=AMBER if pending else DIM)
         new_text, new_color = ("ONLINE", GREEN) if st["llm_online"] else ("OFFLINE", RED)
         if (new_text, new_color) != (self.online_text, self.online_color):
             self.online_text, self.online_color = new_text, new_color
@@ -693,7 +788,7 @@ class Ares7GUI:
         for x, y, dx, dy in ((8, 8, 1, 1), (width - 8, 8, -1, 1), (8, height - 8, 1, -1), (width - 8, height - 8, -1, -1)):
             c.create_line(x, y + dy * size, x, y, x + dx * size, y, fill=bracket, width=2, tags="static")
         cx, cy = width / 2, height / 2 - 8
-        c.create_text(cx, 18, text="ARES7 CORE", fill=DIM, font=(MONO, 9, "bold"), tags="static")
+        c.create_text(14, 14, text="ARES7 CORE", anchor="w", fill=DIM, font=(MONO, 9, "bold"), tags="static")
         if width >= 660:
             line = blend(CYAN, BG, 0.28)
             c.create_line(176, cy, cx - 112, cy, fill=line, tags="static")

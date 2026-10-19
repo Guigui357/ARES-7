@@ -25,10 +25,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from core.config import Config  # noqa: E402
+from core.config import VERSION  # noqa: E402
 from core.logs import log, set_debug  # noqa: E402
 
 TAG = "MAIN"
-VERSION = "1.3.0"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -115,7 +115,7 @@ def cli_emit(kind: str, payload) -> None:
 
 
 def run_cli(ares) -> int:
-    ares.emit = cli_emit
+    ares.add_listener(cli_emit)
     print("=" * 50)
     print(" A R E S - 7   C L I")
     print("=" * 50)
