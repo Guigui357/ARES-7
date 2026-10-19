@@ -14,6 +14,7 @@ import importlib
 import json
 import os
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -264,8 +265,15 @@ class TestDaemon(unittest.TestCase):
 
     def setUp(self) -> None:
         remove_pending()
-        self.daemon = AutonomousDaemon(config=make_config(llm_decisions=False))
-        self.daemon.speak_enabled = False
+        self.daemon = self._make_daemon()
+
+    def _make_daemon(self, **overrides) -> AutonomousDaemon:
+        """Daemon de teste: o log vai para arquivo temporario para nao sujar
+        o daemon.log de verdade do usuario."""
+        daemon = AutonomousDaemon(config=make_config(llm_decisions=False, **overrides))
+        daemon.speak_enabled = False
+        daemon.log_path = os.path.join(tempfile.mkdtemp(prefix="ares7-daemon-"), "daemon.log")
+        return daemon
 
     def tearDown(self) -> None:
         remove_pending()
@@ -303,8 +311,7 @@ class TestDaemon(unittest.TestCase):
         self.assertEqual(self.daemon.tick(), [])
 
     def test_cooldown_segura_repeticao(self):
-        self.daemon = AutonomousDaemon(config=make_config(llm_decisions=False,
-                                                           report_cooldown=999))
+        self.daemon = self._make_daemon(report_cooldown=999)
         obs = Observation(key="y", title="Y", detail="d", severity="warn",
                           tool="reset_context")
         self._fix(obs)
