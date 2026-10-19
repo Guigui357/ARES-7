@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ARES-7">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#05070d"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#35e0f0"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#35e0f0" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#35e0f0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="215" r="190" fill="url(#glow)"/>
+  <path d="M256 62 424 158v196L256 450 88 354V158Z" fill="none" stroke="url(#accent)" stroke-width="11" stroke-linejoin="round" opacity=".55"/>
+  <path d="m256 128 94 224h-45l-21-52h-60l-21 52h-45Zm0 68-18 66h36Z" fill="url(#accent)"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#35e0f0" stroke-width="3" opacity=".2"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="#a78bfa" stroke-width="2" opacity=".12" stroke-dasharray="8 16"/>
+</svg>

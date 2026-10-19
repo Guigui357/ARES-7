@@ -1,0 +1,94 @@
+{
+  "llm": {
+    "host": "127.0.0.1",
+    "port": 8080,
+    "model": "",
+    "api_mode": "auto",
+    "autostart": true,
+    "server_bin": "",
+    "server_model": "",
+    "server_ctx": 2048,
+    "server_threads": 2,
+    "temperature": 0.7,
+    "max_tokens": 128,
+    "timeout": 120
+  },
+  "whisper": {
+    "binary": "",
+    "model": "",
+    "lang": "pt",
+    "threads": 2,
+    "timeout": 120
+  },
+  "audio": {
+    "input": "auto",
+    "output": "auto",
+    "sample_rate": 16000,
+    "record_seconds": 6,
+    "low_peak_threshold": 400
+  },
+  "vad": {
+    "enabled": true,
+    "threshold": 700,
+    "silence_ms": 900,
+    "max_seconds": 12,
+    "pre_roll_ms": 300,
+    "post_roll_ms": 200,
+    "min_speech_ms": 400
+  },
+  "wake_word": {
+    "enabled": false,
+    "word": "ares",
+    "mode": "push_to_talk"
+  },
+  "tts": {
+    "engine": "piper",
+    "model": "",
+    "binary": "",
+    "max_chars": 450
+  },
+  "memory": {
+    "enabled": true,
+    "max_messages": 6,
+    "max_tokens_budget": 900,
+    "db_path": ""
+  },
+  "performance": {
+    "low_memory": false,
+    "auto_low_memory": true,
+    "low_memory_threshold_mb": 700
+  },
+  "whatsapp": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 8766,
+    "verify_token": "",
+    "app_secret": "",
+    "access_token": "",
+    "phone_number_id": "",
+    "api_version": "v23.0",
+    "allowed_senders": []
+  },
+  "remote": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 8765,
+    "token": "troque-este-token"
+  },
+  "autonomous": {
+    "enabled": true,
+    "confirm_required": true,
+    "max_steps": 10,
+    "llm_planning": true,
+    "fallback_to_heuristic": true
+  },
+  "daemon": {
+    "enabled": false,
+    "interval": 60,
+    "report_cooldown": 900,
+    "auto_actions": true,
+    "llm_decisions": true,
+    "log": true,
+    "verbose": false
+  }
+}

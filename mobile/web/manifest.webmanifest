@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "ARES-7 Assistente",
+  "short_name": "ARES-7",
+  "description": "Interface móvel para controlar o ARES-7 no notebook",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

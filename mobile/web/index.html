@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="description" content="Interface móvel do assistente ARES-7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARES-7">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="stylesheet" href="/style.css">
+<title>ARES-7</title>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+<div class="grid-bg" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="orb" id="orb" data-state="idle" role="img" aria-label="Estado do ARES-7">
+      <span class="orb-ring"></span>
+      <span class="orb-pulse"></span>
+      <span class="orb-core"></span>
+    </div>
+    <div class="brand-text">
+      <h1>ARES-7</h1>
+      <small id="brand-sub">ASSISTENTE LOCAL</small>
+    </div>
+  </div>
+  <button id="panel-toggle" class="icon-btn" aria-label="Abrir painel" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+
+<section id="connect-card" class="card connect-card">
+  <label class="connect-label" for="token">Conectar ao notebook</label>
+  <div class="connect-row">
+    <input id="token" type="password" placeholder="Token de acesso" autocomplete="current-password"
+           aria-label="Token de acesso" spellcheck="false">
+    <button id="save-token" class="btn btn-primary">CONECTAR</button>
+  </div>
+  <p class="hint" id="connect-hint">Use o mesmo Wi-Fi do notebook e o token de <code>remote.token</code>.</p>
+</section>
+
+<main id="chat" aria-live="polite" aria-label="Conversa com ARES-7">
+  <div class="welcome">
+    <div class="welcome-mark">A7</div>
+    <strong>Sistema pronto.</strong>
+    <p>Conecte-se ao notebook e envie uma mensagem. O ARES-7 detecta o que você quer,
+       valida se dá certo e faz.</p>
+  </div>
+</main>
+
+<div id="chips" class="chips" role="group" aria-label="Comandos sugeridos">
+  <button class="chip" data-send="verifique o sistema">Status do sistema</button>
+  <button class="chip" data-send="quanto eh 15 por cento de 200">Calcular</button>
+  <button class="chip" data-send="anote comprar pao">Nova nota</button>
+  <button class="chip" data-send="mostra minhas notas">Minhas notas</button>
+  <button class="chip" data-send="o que voce lembra?">Mémória</button>
+  <button class="chip" data-send="timer de 5 minutos">Timer</button>
+</div>
+
+<section id="controls" aria-label="Controles do chat">
+  <div class="mic-row">
+    <button id="mic" class="btn btn-mic" type="button">
+      <svg class="mic-ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/>
+        <path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/>
+      </svg>
+      <span class="mic-label">MICROFONE DO NOTEBOOK</span>
+    </button>
+    <button id="dictate" class="btn btn-ghost" type="button">
+      <svg class="mic-ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z"/>
+        <path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/>
+        <path d="M3 4l18 16" stroke-linecap="round"/>
+      </svg>
+      <span class="mic-label">DITAR</span>
+    </button>
+  </div>
+  <div class="text-row">
+    <input id="text" type="text" placeholder="Mensagem para o ARES-7…" autocomplete="off"
+           enterkeyhint="send" aria-label="Mensagem">
+    <button id="send" class="btn btn-send" type="button" aria-label="Enviar mensagem">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+    </button>
+  </div>
+  <div class="action-row">
+    <button id="clear" class="btn btn-quiet" type="button">LIMPAR CONTEXTO</button>
+    <button id="install" class="btn btn-quiet" type="button" hidden>INSTALAR APP</button>
+  </div>
+  <p id="feedback" class="hint" role="status"></p>
+</section>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="panel" class="panel" aria-label="Painel do ARES-7" aria-hidden="true">
+  <div class="panel-head">
+    <h2>PAINEL</h2>
+    <button id="panel-close" class="icon-btn" aria-label="Fechar painel">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab is-active" data-tab="sistema" role="tab" aria-selected="true">SISTEMA</button>
+    <button class="tab" data-tab="notas" role="tab" aria-selected="false">NOTAS</button>
+    <button class="tab" data-tab="memoria" role="tab" aria-selected="false">MEMÓRIA</button>
+    <button class="tab" data-tab="daemon" role="tab" aria-selected="false">DAEMON</button>
+  </nav>
+  <div class="panel-body">
+    <section class="tab-pane is-active" data-pane="sistema" role="tabpanel">
+      <div class="gauge">
+        <div class="gauge-head"><span>CPU</span><b id="st-cpu">--</b></div>
+        <div class="bar"><i id="bar-cpu"></i></div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-head"><span>RAM</span><b id="st-ram">--</b></div>
+        <div class="bar"><i id="bar-ram"></i></div>
+      </div>
+      <div class="chips-state">
+        <span class="pill" id="st-whisper">WHISPER <b>--</b></span>
+        <span class="pill" id="st-qwen">QWEN <b>--</b></span>
+        <span class="pill" id="st-piper">PIPER <b>--</b></span>
+      </div>
+      <p class="hint" id="sys-extra">--</p>
+    </section>
+    <section class="tab-pane" data-pane="notas" role="tabpanel">
+      <ul class="list" id="notes-list"><li class="empty">Carregando…</li></ul>
+    </section>
+    <section class="tab-pane" data-pane="memoria" role="tabpanel">
+      <ul class="list" id="memory-list"><li class="empty">Carregando…</li></ul>
+    </section>
+    <section class="tab-pane" data-pane="daemon" role="tabpanel">
+      <div id="daemon-pending" class="pending" hidden>
+        <b>Ação aguardando confirmação</b>
+        <p id="daemon-pending-text"></p>
+      </div>
+      <p class="hint" id="daemon-config">--</p>
+      <ul class="list log" id="daemon-log"><li class="empty">Sem registros ainda.</li></ul>
+    </section>
+  </div>
+</aside>
+
+<script src="/app.js" defer></script>
+</body>
+</html>
