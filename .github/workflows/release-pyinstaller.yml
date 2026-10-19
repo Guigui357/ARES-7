@@ -77,7 +77,16 @@ jobs:
       - name: Read version and tag
         id: meta
         run: |
-          VERSION=$(python3 -c "import re; print(re.search(r'VERSION\s*=\s*[\"\x27]([^\"\x27]+)', open('ares.py').read()).group(1))")
+          # A versao vive em core/config.py (fonte unica). Aceita o padrao
+          # antigo em ares.py como reserva.
+          VERSION=$(python3 -c "import re; t=open('core/config.py').read(); m=re.search(r'^VERSION\s*=\s*[\"\x27]([^\"\x27]+)', t, re.M); print(m.group(1) if m else '')")
+          if [ -z "$VERSION" ]; then
+            VERSION=$(python3 -c "import re; t=open('ares.py').read(); m=re.search(r'^VERSION\s*=\s*[\"\x27]([^\"\x27]+)', t, re.M); print(m.group(1) if m else '')")
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Nao consegui ler a versao do projeto." >&2
+            exit 1
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           if [ -n "${{ inputs.tag }}" ]; then
             TAG="${{ inputs.tag }}"
