@@ -108,6 +108,33 @@ Configuracao em `config.json`, secao `daemon`:
 Variaveis de ambiente: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
 `ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
 
+## Releases (PyInstaller)
+
+`.github/workflows/release-pyinstaller.yml` compila com PyInstaller, roda a
+suite de testes, faz o smoke test e publica no GitHub Releases.
+
+```bash
+gh workflow run release-pyinstaller.yml          # manual (publica)
+git tag v1.3.0 && git push origin v1.3.0          # publica por tag
+```
+
+- A versao vem do `VERSION` em `ares.py`; a tag padrao e `v<versao>`.
+- Em pull requests o workflow so faz o build (nao publica), garantindo que o
+  `ARES-7.spec` continua buildando.
+- Saida: `dist/ARES-7` (arquivo unico) empacotado em tar.gz com `config.json`
+  de exemplo e `README.md` ao lado, mais `SHA256SUMS.txt`.
+- `config.json` ao lado do executavel tem precedencia sobre o embutido
+  (`APP_DIR` > `_MEIPASS` > `~/.ares`).
+- Modelos podem ficar em `models/` ao lado do executavel, em `~/models` ou em
+  `~/.ares/models`.
+
+Build local:
+
+```bash
+./build_pyinstaller.sh
+./dist/ARES-7 --version
+```
+
 ## Ferramentas disponiveis
 
 `system_info`, `process_list`, `network_info`, `volume`, `mute`, `brightness`,

@@ -112,6 +112,36 @@ Configuracao em `config.json`, secao `daemon`:
 Variaveis: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
 `ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
 
+## Releases (PyInstaller)
+
+O workflow `.github/workflows/release-pyinstaller.yml` compila o ARES-7 com
+PyInstaller, roda a suite de testes, faz o smoke test do binario e publica no
+GitHub Releases.
+
+```bash
+# dispara manualmente (publica por padrao)
+gh workflow run release-pyinstaller.yml
+
+# publica por tag (o release e criado automaticamente)
+git tag v1.3.0 && git push origin v1.3.0
+```
+
+A versao do release vem do `VERSION` em `ares.py`; a tagPadrao e `v<versao>`.
+O workflow tambem roda em pull requests, mas so faz o build (sem publicar) —
+serve para garantir que o `ARES-7.spec` continua buildando.
+
+O artefato e um arquivo unico (`dist/ARES-7`, ~14 MB) com o `config.json` de
+exemplo e o README ao lado. Whisper, llama.cpp/Qwen, Piper e os modelos
+continuam externos: o binario roda 100% offline, so precisando desses para
+voz e LLM.
+
+Para build local, sem CI:
+
+```bash
+./build_pyinstaller.sh
+./dist/ARES-7 --version
+```
+
 ## Configuração
 
 Edite `config.json` (nunca o código-fonte). Campos principais:

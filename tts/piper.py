@@ -26,8 +26,10 @@ MODEL_PATTERNS = ("*pt_BR*.onnx", "*pt*.onnx", "*.onnx")
 
 
 def _search_dirs() -> list[str]:
-    from core.config import HOME, ARES7_HOME, PROJECT_DIR
+    from core.config import APP_DIR, HOME, ARES7_HOME, PROJECT_DIR
     return [
+        os.path.join(APP_DIR, "models"),
+        os.path.join(APP_DIR, "voices"),
         os.path.join(PROJECT_DIR, "models"),
         os.path.join(ARES7_HOME, "models"),
         os.path.join(ARES7_HOME, "voices"),
