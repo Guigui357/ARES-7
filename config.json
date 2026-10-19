@@ -74,5 +74,12 @@
     "host": "127.0.0.1",
     "port": 8765,
     "token": "troque-este-token"
+  },
+  "autonomous": {
+    "enabled": true,
+    "confirm_required": true,
+    "max_steps": 10,
+    "llm_planning": true,
+    "fallback_to_heuristic": true
   }
 }

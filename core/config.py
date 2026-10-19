@@ -103,6 +103,13 @@ DEFAULTS: dict = {
         "port": 8765,
         "token": "troque-este-token",
     },
+    "autonomous": {
+        "enabled": True,           # motor de IA autonoma (detecta, valida, executa)
+        "confirm_required": True,  # acoes de risco exigem confirmacao
+        "max_steps": 10,           # limite de passos por plano
+        "llm_planning": True,      # usa o LLM para planejar acoes complexas
+        "fallback_to_heuristic": True,
+    },
 }
 
 # mapeamento de variaveis de ambiente -> (secao, chave, tipo)
@@ -136,6 +143,10 @@ ENV_MAP = {
     "ARES7_REMOTE_PORT": ("remote", "port", int),
     "ARES7_LOW_MEMORY": ("performance", "low_memory", "bool"),
     "AUTO_LOW_MEMORY": ("performance", "auto_low_memory", "bool"),
+    "ARES7_AUTONOMOUS_ENABLED": ("autonomous", "enabled", "bool"),
+    "ARES7_AUTONOMOUS_STEPS": ("autonomous", "max_steps", "int"),
+    "ARES7_AUTONOMOUS_PLANNING": ("autonomous", "llm_planning", "bool"),
+    "ARES7_AUTONOMOUS_CONFIRM": ("autonomous", "confirm_required", "bool"),
 }
 
 

@@ -63,6 +63,11 @@ class Ares7:
         self.memory = LongTermMemory(str(self.config.get("memory", "db_path", "") or "")) \
             if self.memory_enabled else None  # type: ignore[assignment]
 
+        # Motor da IA Autonoma: detecta, valida e executa o que o router local
+        # nao resolveu. Compartilha o mesmo nucleo (LLM, memoria, contexto).
+        from core.autonomous import AutonomousAres
+        self.autonomous = AutonomousAres(core=self)
+
         self.busy = threading.Lock()
         self.speak_enabled = True
         self.state = "READY"
@@ -172,6 +177,14 @@ class Ares7:
         self.set_state("PROCESSING")
         if self._handle_confirmation(text):
             return
+        # Confirmacao pendente do motor autonomo (acao de risco planejada pelo LLM).
+        if self.autonomous.has_pending() and self.autonomous.is_confirmation_answer(text):
+            reply = self.autonomous.run_autonomous(text)
+            self.emit("ares", reply)
+            if self.speak_enabled:
+                self.set_state("SPEAKING")
+                self.speak(reply)
+            return
         # Fast path: comandos locais nunca precisam acordar o LLM.
         result = self.router.try_handle(text)
         if result is not None:
@@ -186,17 +199,20 @@ class Ares7:
                 return
             reply = result.reply
         else:
-            extra = self.memory.context_for(text) if self.memory else ""
-            messages = self.context.build_messages(text, extra_system=extra)
-            try:
-                # Respostas curtas usam menos tokens e terminam mais rápido.
-                reply = self.llm.fast_chat(messages) if len(text) <= 120 else self.llm.chat(messages)
-            except LLMError as exc:
-                self.emit("error", str(exc))
-                self.set_state("ERROR")
-                return
-            self.context.add("user", text)
-            self.context.add("assistant", reply)
+            # IA Autonoma: detecta a intencao, valida e executa sem rodadas extras.
+            reply = self.autonomous.run_autonomous(text, skip_local=True)
+            if not reply:
+                extra = self.memory.context_for(text) if self.memory else ""
+                messages = self.context.build_messages(text, extra_system=extra)
+                try:
+                    # Respostas curtas usam menos tokens e terminam mais rápido.
+                    reply = self.llm.fast_chat(messages) if len(text) <= 120 else self.llm.chat(messages)
+                except LLMError as exc:
+                    self.emit("error", str(exc))
+                    self.set_state("ERROR")
+                    return
+                self.context.add("user", text)
+                self.context.add("assistant", reply)
         self.emit("ares", reply)
         if self.speak_enabled:
             self.set_state("SPEAKING")

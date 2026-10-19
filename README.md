@@ -22,7 +22,55 @@ python3 ares.py --low-memory # modo ULTRA FAST
 python3 ares.py --remote     # ativa o servidor remoto (celular via navegador)
 python3 ares.py --wake       # wake word "ares" (modo CONTINUOUS)
 python3 ares.py --debug      # logs detalhados
+python3 ares.py --autonomous "verifique o sistema"   # IA autonoma (uma mensagem)
 ```
+
+## IA Autonoma
+
+O ARES-7 detecta o que voce quer fazer, valida se da certo e faz — em zero
+rodadas ou uma mensagem. Isso vale para **todas** as interfaces: voz, CLI,
+GUI, web remota e WhatsApp.
+
+Fluxo:
+
+```
+requisicao -> detecta intencao -> valida pre-requisitos -> executa -> resultado
+```
+
+- **Detecta**: regras locais primeiro (nunca acordam o LLM); se o pedido for
+  mais complexo, o Qwen planeja os passos em uma unica chamada.
+- **Valida**: antes de cada passo o motor confere parametros, semantica e
+  dependencias externas (ex.: `wpctl`, `brightnessctl`, `playerctl`). Se algo
+  nao esta instalado, o erro diz o que falta em vez de falhar calado.
+- **Executa**: as acaoes rodam em sequencia e o resultado volta pronto.
+
+Acoes de risco (desligar, reiniciar, suspender, bloquear tela, fechar app)
+pedem confirmacao — uma unica mensagem ("sim"/"nao"), nada mais.
+
+```bash
+python3 ares.py --autonomous "verifique o sistema"
+python3 ares.py --autonomous "anote comprar pao"
+python3 ares.py --autonomous "quanto eh 15 por cento de 200"
+python3 ares.py --autonomous "abra o navegador"
+python3 ares.py --autonomous "desligar o computador"   # pede confirmacao
+python3 ares.py --autonomous "sim"                     # confirma
+```
+
+Configuracao em `config.json`, secao `autonomous`:
+
+```json
+"autonomous": {
+  "enabled": true,
+  "confirm_required": true,
+  "max_steps": 10,
+  "llm_planning": true,
+  "fallback_to_heuristic": true
+}
+```
+
+Variaveis de ambiente: `ARES7_AUTONOMOUS_ENABLED`,
+`ARES7_AUTONOMOUS_STEPS`, `ARES7_AUTONOMOUS_PLANNING`,
+`ARES7_AUTONOMOUS_CONFIRM`.
 
 ## Configuração
 
@@ -113,8 +161,9 @@ O ARES-7 já possui comandos locais para:
 ## Estrutura
 
 ```
-ares.py             launcher (GUI/CLI/diagnose/benchmark)
+ares.py             launcher (GUI/CLI/diagnose/benchmark/--autonomous)
 core/              assistant, router, context, memory, config, logs
+core/autonomous.py motor da IA autonoma (detecta, valida, executa)
 audio/             devices, recorder, vad, player
 stt/               whisper.cpp
 llm/               llama.cpp (endpoints auto-detectados, autostart, reconnect)
