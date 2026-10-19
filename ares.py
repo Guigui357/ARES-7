@@ -14,6 +14,7 @@ Uso:
     python3 ares.py --low-memory   # modo ULTRA FAST
     python3 ares.py --debug        # logs detalhados
     python3 ares.py --wake         # ativa wake word ("ares") modo CONTINUOUS
+    python3 ares.py --autonomous "verifique o sistema"   # IA autonoma (uma mensagem)
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ from core.config import Config  # noqa: E402
 from core.logs import log, set_debug  # noqa: E402
 
 TAG = "MAIN"
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -37,6 +38,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     mode.add_argument("--diagnose", action="store_true", help="relatorio de diagnostico completo")
     mode.add_argument("--benchmark", action="store_true", help="mede desempenho do pipeline")
     mode.add_argument("--status", action="store_true", help="estado rapido do sistema")
+    mode.add_argument("--autonomous", metavar="REQUEST", help="modo IA autonoma: detecta, valida e executa requisicao")
     parser.add_argument("--voice", action="store_true", help="CLI com botao de voz (/voz)")
     parser.add_argument("--text", action="store_true", help="somente texto (desativa TTS)")
     parser.add_argument("--no-tts", action="store_true", help="nao falar as respostas")
@@ -197,6 +199,9 @@ def main(argv: list[str] | None = None) -> int:
     maybe_start_whatsapp(ares)
     if args.status:
         return run_status(ares)
+    if args.autonomous is not None:
+        from core.autonomous import run_autonomous_cli
+        return run_autonomous_cli(args.autonomous, args.config)
     if args.cli:
         return run_cli(ares)
     return run_gui(ares)

@@ -15,6 +15,7 @@ import ast
 import datetime
 import math
 import operator
+import os
 import re
 import threading
 import unicodedata
@@ -26,7 +27,7 @@ from tools import media as t_media
 from tools import network as t_network
 from tools import system as t_sys
 from tools.common import (CPU_SAMPLER, local_ip, read_battery, read_memory,
-                          read_temperature, read_uptime_seconds, run_quiet)
+                          read_temperature, read_uptime_seconds, run_quiet, user_dir)
 
 TAG = "ROUTER"
 
@@ -206,7 +207,7 @@ SEARCH_RE = re.compile(
 )
 CALC_RE = re.compile(
     r"^\s*(?:ares[\s,]+)?(?:por favor[\s,]+)?(?:(?:pode|poderia|consegue)\s+)?"
-    r"(?P<verb>calcul(?:ar|e|a)\b|quanto\s+(?:[eé]|eh|d[aá]|fica|vale|seria)|resultado\s+d[eo]|conta\s+d[eo])"
+    r"(?P<verb>calcul(?:ar|e|a)\b|quanto\s+(?:eh\b|[eé]\b|d[aá]|fica|vale|seria)|resultado\s+d[eo]|conta\s+d[eo])"
     r"\s*(?:d[eo]\s+)?(?P<expr>.+)$",
     re.IGNORECASE | re.DOTALL,
 )
@@ -340,6 +341,12 @@ class IntentRouter:
         facts = self.ares.memory.search(ut.norm, limit=3)
         if facts:
             return IntentResult("Lembro disso: " + " | ".join(facts))
+        # Pergunta generica ("o que voce lembra?") -> mostra o que tem guardado.
+        if len(ut.tokens) <= 4:
+            recent = self.ares.memory.list(limit=5)
+            if recent:
+                lines = [f"#{fid} {content}" for fid, content in recent]
+                return IntentResult("Eu lembro disso:\n" + "\n".join(lines))
         return IntentResult("Não tenho nada sobre isso na memória.")
 
     def _intent_memory_del(self, ut: Utterance) -> IntentResult | None:
@@ -411,7 +418,14 @@ class IntentRouter:
         query = match.group("query").strip(" .!?")
         if not query:
             return None
-        engine_key = strip_accents((match.group("engine") or "google").lower())
+        engine = match.group("engine")
+        # "busque arquivo X" (sem engine) e busca de arquivos, nao na web.
+        # So quando o alvo parece um nome de arquivo (tem ponto ou e uma palavra).
+        if not engine and re.search(r"\b(arquivo|arquivos|pasta|pastas)\b", query):
+            rest = re.sub(r"\b(arquivo|arquivos|pasta|pastas)\b", "", query, flags=re.IGNORECASE).strip()
+            if "." in rest or (rest and " " not in rest):
+                return None
+        engine_key = strip_accents((engine or "google").lower())
         return IntentResult(t_apps.web_search(query, engine_key))
 
     # ---- energia (confirmacao) ------------------------------------------------------
@@ -716,14 +730,56 @@ class IntentRouter:
     def _intent_file_ops(self, ut: Utterance) -> IntentResult | None:
         if ut.howto or not ut.short(16):
             return None
-        if ut.stem("procur", "busc", "encontr", "ach") and ut.has("arquivo", "arquivos", "pasta"):
-            match = re.search(r"(?:arquivo|pasta)s?\s+(?:chamad[ao]\s+|nomead[ao]\s+)?[\"']?([\w.\- ]+?)[\"']?\s*$",
-                              ut.norm)
+        if ut.stem("procur", "busc", "busqu", "encontr", "ach") and ut.has("arquivo", "arquivos", "pasta"):
+            # Extrai do texto original para preservar o nome real do arquivo (ex.: "AGENTS.md").
+            match = re.search(
+                r"(?:arquivo|arquivos|pasta|pastas)\s+(?:chamad[ao]\s+|nomead[ao]\s+)?[\"']?(.+?)[\"']?\s*$",
+                ut.raw, re.IGNORECASE | re.DOTALL)
             if match:
-                return IntentResult(t_files.file_search(match.group(1).strip()))
+                name = match.group(1).strip(" .!?,;:")
+                name = re.sub(r"^(?:no|na|nos|nas|do|da|em|para|pra|dentro\s+de)\s+", "",
+                              name, flags=re.IGNORECASE).strip()
+                if name:
+                    found = t_files.file_search(name)
+                    # Nome com ponto e sem espacos parece nome de arquivo: responde local.
+                    if "." in name and " " not in name:
+                        return IntentResult(found)
+                    if not found.startswith("Nenhum arquivo"):
+                        return IntentResult(found)
         if ut.stem("list", "mostr") and ut.has("pasta", "diretorio", "arquivos") and ut.short(8):
-            return IntentResult(t_files.list_dir())
+            explicit = self._detect_path(ut)
+            if explicit:
+                return IntentResult(t_files.list_dir(explicit))
+            folder = self._detect_folder(ut)
+            return IntentResult(t_files.list_dir(folder))
         return None
+
+    @staticmethod
+    def _detect_path(ut: Utterance) -> str:
+        """Detecta um caminho explicito (ex.: 'liste a pasta /tmp/relatorios')."""
+        match = re.search(r"(/[^\s,;]+|~/[^\s,;]+)", ut.raw)
+        if not match:
+            return ""
+        path = os.path.expanduser(match.group(1).rstrip(".,;!?"))
+        return path if os.path.isdir(path) else ""
+
+    @staticmethod
+    def _detect_folder(ut: Utterance) -> str:
+        """Descobre a pasta citada (downloads, documentos, imagens...)."""
+        folders = {
+            "downloads": "DOWNLOAD", "download": "DOWNLOAD", "baixados": "DOWNLOAD",
+            "documentos": "DOCUMENTS", "documento": "DOCUMENTS",
+            "imagens": "PICTURES", "fotos": "PICTURES", "figuras": "PICTURES",
+            "musicas": "MUSIC", "videos": "VIDEOS",
+            "desktop": "DESKTOP", "area": "DESKTOP", "trabalho": "DESKTOP",
+        }
+        for word, kind in folders.items():
+            if word in ut.wset:
+                return user_dir(kind, {
+                    "DOWNLOAD": "Downloads", "DOCUMENTS": "Documents", "PICTURES": "Pictures",
+                    "MUSIC": "Music", "VIDEOS": "Videos", "DESKTOP": "Desktop",
+                }[kind])
+        return ""
 
     # ---- abrir URL direta -------------------------------------------------------------------------------
     def _intent_open_url(self, ut: Utterance) -> IntentResult | None:
@@ -818,9 +874,11 @@ class IntentRouter:
         if (ut.has("status", "diagnostico")
                 or ut.tokens == ["sistema"]
                 or (ut.has("sistema", "computador", "maquina", "notebook")
-                    and wset & {"como", "esta", "estado", "uso", "situacao"})):
+                    and (wset & {"como", "esta", "estado", "uso", "situacao", "resumo", "panorama"}
+                         or ut.stem("verif", "chec", "consult", "analis", "mostr")))):
             return IntentResult(t_sys.system_info())
-        if ut.has("rede", "internet", "conexao") and wset & {"como", "esta", "status", "testar", "teste"}:
+        if ut.has("rede", "internet", "conexao") and (wset & {"como", "esta", "status", "testar", "teste"}
+                                                     or ut.stem("verif", "chec")):
             return IntentResult(t_network.network_info())
         return None
 
