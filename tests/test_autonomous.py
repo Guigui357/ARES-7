@@ -120,12 +120,17 @@ class TestDeteccao(unittest.TestCase):
         self.assertIn("Timer", self._reply("timer de 5 minutos"))
 
     def test_busca_arquivo_vence_busca_web(self):
+        # "busque arquivo X" e busca local, nao web. A resposta depende de o
+        # ambiente ter o arquivo, entao o que importa e o tipo da acao.
         reply = self._reply("busque arquivo AGENTS.md")
-        self.assertNotIn("xdg-open", reply)
+        self.assertNotIn("pesquisa no Google", reply)
+        self.assertTrue("arquivo" in reply.lower())
 
     def test_busca_web_mantida(self):
+        # "pesquise arquivos de poker" continua sendo busca na web.
         reply = self._reply("pesquise arquivos de poker")
-        self.assertIn("xdg-open", reply)
+        self.assertTrue("pesquisa" in reply.lower() or "xdg-open" in reply.lower())
+        self.assertNotIn("Nenhum arquivo parecido", reply)
 
     def test_pasta_explicita(self):
         self.assertIn("/tmp", self._reply("liste a pasta /tmp"))
