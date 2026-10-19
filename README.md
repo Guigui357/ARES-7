@@ -72,6 +72,76 @@ Variaveis de ambiente: `ARES7_AUTONOMOUS_ENABLED`,
 `ARES7_AUTONOMOUS_STEPS`, `ARES7_AUTONOMOUS_PLANNING`,
 `ARES7_AUTONOMOUS_CONFIRM`.
 
+## Modo daemon (sem mensagem nenhuma)
+
+O daemon nao espera requisicao: ele roda, observa a maquina, decide o que
+fazer e age sozinho. So fala quando ha algo que vale a pena dizer.
+
+```bash
+python3 ares.py --daemon         # roda sozinho, Ctrl+C para parar
+python3 ares.py --daemon-once    # um ciclo e sai (util para cron)
+```
+
+O ciclo e: **observa → decide → executa → registra**.
+
+- **Observa** — RAM, disco, bateria, temperatura, CPU, servidor do Qwen e
+  acoes pendentes de confirmacao.
+- **Decide** — o Qwen avalia a situacao e devolve o que fazer; sem LLM, valem
+  as regras locais.
+- **Executa** — acoes seguras rodam sozinhas (limpar o contexto, reconectar o
+  llama.cpp, avisar). Acoes de risco ficam na fila para voce confirmar.
+- **Registra** — tudo em `~/.ares/daemon.log`.
+
+So repete o que e novo: uma condicao ja reportada nao vira spam, e o
+`report_cooldown` segura acoes repetidas.
+
+Configuracao em `config.json`, secao `daemon`:
+
+```json
+"daemon": {
+  "enabled": false,
+  "interval": 60,
+  "report_cooldown": 900,
+  "auto_actions": true,
+  "llm_decisions": true,
+  "log": true,
+  "verbose": false
+}
+```
+
+Variaveis: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
+`ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
+
+## Releases (PyInstaller)
+
+O workflow `.github/workflows/release-pyinstaller.yml` compila o ARES-7 com
+PyInstaller, roda a suite de testes, faz o smoke test do binario e publica no
+GitHub Releases.
+
+```bash
+# dispara manualmente (publica por padrao)
+gh workflow run release-pyinstaller.yml
+
+# publica por tag (o release e criado automaticamente)
+git tag v1.3.0 && git push origin v1.3.0
+```
+
+A versao do release vem do `VERSION` em `ares.py`; a tagPadrao e `v<versao>`.
+O workflow tambem roda em pull requests, mas so faz o build (sem publicar) —
+serve para garantir que o `ARES-7.spec` continua buildando.
+
+O artefato e um arquivo unico (`dist/ARES-7`, ~14 MB) com o `config.json` de
+exemplo e o README ao lado. Whisper, llama.cpp/Qwen, Piper e os modelos
+continuam externos: o binario roda 100% offline, so precisando desses para
+voz e LLM.
+
+Para build local, sem CI:
+
+```bash
+./build_pyinstaller.sh
+./dist/ARES-7 --version
+```
+
 ## Configuração
 
 Edite `config.json` (nunca o código-fonte). Campos principais:

@@ -24,8 +24,9 @@ MODEL_PATTERNS = ("ggml-tiny*.bin", "ggml-base*.bin", "ggml-small*.bin", "ggml-*
 
 
 def _search_dirs() -> list[str]:
-    from core.config import HOME, ARES7_HOME, PROJECT_DIR
+    from core.config import APP_DIR, HOME, ARES7_HOME, PROJECT_DIR
     return [
+        os.path.join(APP_DIR, "models"),
         os.path.join(PROJECT_DIR, "models"),
         os.path.join(ARES7_HOME, "models"),
         os.path.join(HOME, "models"),

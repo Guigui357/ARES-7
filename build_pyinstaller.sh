@@ -24,8 +24,8 @@ fi
 
 echo ""
 echo "=== BUILD CONCLUÍDO ==="
-echo "Executável: dist/ARES-7/ARES-7"
-echo "Teste: ./dist/ARES-7/ARES-7 --version"
+echo "Executável: dist/ARES-7"
+echo "Teste: ./dist/ARES-7 --version"
 echo ""
 echo "O config.json fica ao lado do executável e pode ser editado."
 echo "Whisper, llama.cpp/Qwen, Piper e modelos continuam externos."

@@ -66,11 +66,81 @@ autonomo sempre que o roteador local nao resolve o pedido.
 4. **Fallback** — se o LLM estiver offline, o motor tenta as regras locais e
    responde o que puder; nunca trava.
 
+## Modo daemon (sem mensagem nenhuma)
+
+O daemon nao espera requisicao nenhuma: ele roda, observa a maquina, decide o
+que fazer e age sozinho. So fala quando ha algo que vale a pena dizer.
+
+```bash
+python3 ares.py --daemon         # fica rodando (Ctrl+C para parar)
+python3 ares.py --daemon-once    # um ciclo de observacao e sai
+```
+
+Ciclo: **observa -> decide -> executa -> registra**.
+
+- `core/watcher.py` observa RAM, disco, bateria, temperatura, CPU, servidor do
+  Qwen e acoes pendentes de confirmacao. Cada condicao vira uma observacao
+  com severidade, uma acao sugerida e o que fazer a respeito.
+- `core/daemon.py` decide e executa. O Qwen avalia a situacao e devolve o que
+  fazer (mesma validacao do resto do sistema); sem LLM, valem as regras locais.
+- Acoes seguras rodam sozinhas: `reset_context`, `reconnect_llm`, `notify`.
+- Acoes de risco nao sao executadas: ficam registradas em
+  `~/.ares/autonomous_pending.json` para voce confirmar depois.
+- Tudo fica em `~/.ares/daemon.log`.
+
+O daemon so repete o que e novo: uma condicao ja reportada nao vira spam, e o
+`report_cooldown` segura acoes repetidas.
+
+Configuracao em `config.json`, secao `daemon`:
+
+```json
+"daemon": {
+  "enabled": false,
+  "interval": 60,
+  "report_cooldown": 900,
+  "auto_actions": true,
+  "llm_decisions": true,
+  "log": true,
+  "verbose": false
+}
+```
+
+Variaveis de ambiente: `ARES7_DAEMON_ENABLED`, `ARES7_DAEMON_INTERVAL`,
+`ARES7_DAEMON_COOLDOWN`, `ARES7_DAEMON_ACTIONS`, `ARES7_DAEMON_DECISIONS`.
+
+## Releases (PyInstaller)
+
+`.github/workflows/release-pyinstaller.yml` compila com PyInstaller, roda a
+suite de testes, faz o smoke test e publica no GitHub Releases.
+
+```bash
+gh workflow run release-pyinstaller.yml          # manual (publica)
+git tag v1.3.0 && git push origin v1.3.0          # publica por tag
+```
+
+- A versao vem do `VERSION` em `ares.py`; a tag padrao e `v<versao>`.
+- Em pull requests o workflow so faz o build (nao publica), garantindo que o
+  `ARES-7.spec` continua buildando.
+- Saida: `dist/ARES-7` (arquivo unico) empacotado em tar.gz com `config.json`
+  de exemplo e `README.md` ao lado, mais `SHA256SUMS.txt`.
+- `config.json` ao lado do executavel tem precedencia sobre o embutido
+  (`APP_DIR` > `_MEIPASS` > `~/.ares`).
+- Modelos podem ficar em `models/` ao lado do executavel, em `~/models` ou em
+  `~/.ares/models`.
+
+Build local:
+
+```bash
+./build_pyinstaller.sh
+./dist/ARES-7 --version
+```
+
 ## Ferramentas disponiveis
 
 `system_info`, `process_list`, `network_info`, `volume`, `mute`, `brightness`,
 `screenshot`, `media`, `list_dir`, `file_search`, `open_folder`, `open_app`,
-`open_site`, `open_url`, `web_search`.
+`open_site`, `open_url`, `web_search`, `notify`, `reset_context`,
+`reconnect_llm`.
 
 Acoes de risco (exigem confirmacao): `lock_screen`, `poweroff`, `reboot`,
 `suspend`, `close_app`.

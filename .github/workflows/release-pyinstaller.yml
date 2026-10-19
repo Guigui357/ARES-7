@@ -1,0 +1,193 @@
+name: ARES-7 Release (PyInstaller)
+
+on:
+  # Tag vX.Y.Z publica o release automaticamente.
+  push:
+    tags:
+      - "v*"
+  # Build manual; opcionalmente publica.
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publicar no Releases"
+        type: boolean
+        default: true
+      tag:
+        description: "Tag do release (vazio = v<versao do ares.py>)"
+        type: string
+        default: ""
+  # Garante que o spec continua buildando.
+  pull_request:
+    paths:
+      - "ares.py"
+      - "core/**"
+      - "tools/**"
+      - "llm/**"
+      - "stt/**"
+      - "tts/**"
+      - "audio/**"
+      - "gui/**"
+      - "remote/**"
+      - "whatsapp/**"
+      - "web/**"
+      - "tests/**"
+      - "ARES-7.spec"
+      - "build_pyinstaller.sh"
+      - ".github/workflows/release-pyinstaller.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-pyinstaller-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: ARES-7
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  build:
+    name: Build (PyInstaller)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      publish: ${{ steps.meta.outputs.publish }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # O ARES-7 roda 100% com a biblioteca padrao. O PyInstaller precisa do
+      # tkinter para embutir a GUI, e o Python do sistema do runner ja vem
+      # com o pacote correspondente instalado via apt.
+      - name: Set up Python and system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-venv python3-tk
+          python3 --version
+          python3 -c "import tkinter; print('tkinter', tkinter.TkVersion)"
+
+      - name: Install build dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install "pyinstaller>=6.0"
+
+      - name: Read version and tag
+        id: meta
+        run: |
+          VERSION=$(python3 -c "import re; print(re.search(r'VERSION\s*=\s*[\"\x27]([^\"\x27]+)', open('ares.py').read()).group(1))")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="v${VERSION}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.publish }}" = "true" ] || [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run test suite
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Build with PyInstaller
+        run: |
+          python3 -m PyInstaller --clean --noconfirm ARES-7.spec
+          test -x "dist/${APP_NAME}"
+
+      - name: Smoke test
+        run: |
+          "./dist/${APP_NAME}" --version
+          "./dist/${APP_NAME}" --status
+
+      - name: Package
+        run: |
+          # O pacote leva o executavel, um config.json de exemplo (editavel
+          # ao lado do binario) e o README com o que falta instalar.
+          # O nome config.json importa: o app procura esse arquivo ao lado
+          # do executavel e usa como override do que vem embutido.
+          cp config.json "dist/config.json"
+          cp README.md "dist/README.md"
+          cd dist
+          tar czf "${APP_NAME}-${{ steps.meta.outputs.version }}-linux-x86_64.tar.gz" \
+            "${APP_NAME}" "config.json" "README.md"
+          cd ..
+          mkdir -p release
+          cp "dist/${APP_NAME}-${{ steps.meta.outputs.version }}-linux-x86_64.tar.gz" release/
+          cp dist/ARES-7 release/ARES-7
+          cd release
+          sha256sum *.tar.gz ARES-7 > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ares7-pyinstaller-linux
+          path: release/
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ares7-pyinstaller-linux
+          path: release
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG ja existe: atualizando os assets."
+            gh release upload "$TAG" ./* --clobber
+          else
+            {
+              echo "## ARES-7 v${VERSION}"
+              echo ""
+              echo "Assistente local empacotado com PyInstaller (arquivo unico, sem instalador)."
+              echo ""
+              echo "### Como usar"
+              echo ""
+              echo '```bash'
+              echo "tar xzf ${APP_NAME}-${VERSION}-linux-x86_64.tar.gz"
+              echo "./${APP_NAME} --diagnose"
+              echo "./${APP_NAME} --cli"
+              echo "./${APP_NAME} --autonomous \"verifique o sistema\""
+              echo "./${APP_NAME} --daemon"
+              echo '```'
+              echo ""
+              echo "O \`config.json\` pode ficar ao lado do executavel e ser editado."
+              echo "Whisper, llama.cpp/Qwen, Piper e os modelos continuam externos."
+              echo ""
+              echo "### Checksums"
+              echo ""
+              echo '```'
+              cat SHA256SUMS.txt
+              echo '```'
+            } > NOTES.md
+            gh release create "$TAG" \
+              --title "${APP_NAME} v${VERSION}" \
+              --notes-file NOTES.md \
+              --target "${{ github.sha }}"
+            gh release upload "$TAG" ./*.tar.gz ./ARES-7 ./SHA256SUMS.txt --clobber
+          fi
+          gh release view "$TAG" --json url --jq .url

@@ -39,6 +39,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     mode.add_argument("--benchmark", action="store_true", help="mede desempenho do pipeline")
     mode.add_argument("--status", action="store_true", help="estado rapido do sistema")
     mode.add_argument("--autonomous", metavar="REQUEST", help="modo IA autonoma: detecta, valida e executa requisicao")
+    mode.add_argument("--daemon", action="store_true",
+                      help="IA autonoma sem mensagem: observa e age sozinho")
+    mode.add_argument("--daemon-once", action="store_true",
+                      help="IA autonoma sem mensagem: um ciclo de observacao e sai")
     parser.add_argument("--voice", action="store_true", help="CLI com botao de voz (/voz)")
     parser.add_argument("--text", action="store_true", help="somente texto (desativa TTS)")
     parser.add_argument("--no-tts", action="store_true", help="nao falar as respostas")
@@ -202,6 +206,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.autonomous is not None:
         from core.autonomous import run_autonomous_cli
         return run_autonomous_cli(args.autonomous, args.config)
+    if args.daemon or args.daemon_once:
+        from core.daemon import run_daemon
+        return run_daemon(args.config, once=args.daemon_once, core=ares)
     if args.cli:
         return run_cli(ares)
     return run_gui(ares)
