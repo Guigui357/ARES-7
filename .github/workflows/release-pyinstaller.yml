@@ -153,12 +153,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.build.outputs.tag }}
           VERSION: ${{ needs.build.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           cd release
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             echo "Release $TAG ja existe: atualizando os assets."
-            gh release upload "$TAG" ./* --clobber
+            gh release upload "$TAG" ./* --repo "$REPO" --clobber
           else
             {
               echo "## ARES-7 v${VERSION}"
@@ -184,10 +185,17 @@ jobs:
               cat SHA256SUMS.txt
               echo '```'
             } > NOTES.md
-            gh release create "$TAG" \
+            if ! gh release create "$TAG" \
+              --repo "$REPO" \
               --title "${APP_NAME} v${VERSION}" \
               --notes-file NOTES.md \
-              --target "${{ github.sha }}"
-            gh release upload "$TAG" ./*.tar.gz ./ARES-7 ./SHA256SUMS.txt --clobber
+              --target "${{ github.sha }}"; then
+              echo "Falha ao criar com --target; a tag pode ja existir. Tentando de novo."
+              gh release create "$TAG" \
+                --repo "$REPO" \
+                --title "${APP_NAME} v${VERSION}" \
+                --notes-file NOTES.md
+            fi
+            gh release upload "$TAG" ./*.tar.gz ./ARES-7 ./SHA256SUMS.txt --repo "$REPO" --clobber
           fi
-          gh release view "$TAG" --json url --jq .url
+          gh release view "$TAG" --repo "$REPO" --json url --jq .url
