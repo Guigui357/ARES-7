@@ -81,5 +81,14 @@
     "max_steps": 10,
     "llm_planning": true,
     "fallback_to_heuristic": true
+  },
+  "daemon": {
+    "enabled": false,
+    "interval": 60,
+    "report_cooldown": 900,
+    "auto_actions": true,
+    "llm_decisions": true,
+    "log": true,
+    "verbose": false
   }
 }

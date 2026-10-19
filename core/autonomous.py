@@ -104,6 +104,13 @@ def _register_tools(ares_instance: "AutonomousAres") -> dict[str, Tool]:
         "open_url": Tool("open_url", "Abre uma URL", t_apps.open_url, params={"url": "str", "label": "str"}),
         "web_search": Tool("web_search", "Pesquisa na web (google/youtube/wikipedia/maps)", t_apps.web_search,
                            params={"query": "str", "engine": "str"}),
+        # Ferramentas internas: usadas pelo daemon e pelo planejamento.
+        "notify": Tool("notify", "Avisa o usuario sobre o que aconteceu", ares_instance._notify,
+                       params={"message": "str"}),
+        "reset_context": Tool("reset_context", "Limpa o historico da conversa para liberar memoria",
+                              ares_instance._reset_context),
+        "reconnect_llm": Tool("reconnect_llm", "Tenta subir/reconectar o servidor llama.cpp",
+                              ares_instance._reconnect_llm),
         # Acoes de risco: exigem confirmacao do usuario.
         "lock_screen": Tool("lock_screen", "Bloqueia a tela", t_sys.lock_screen, risk="confirm"),
         "poweroff": Tool("poweroff", "Desliga o computador", t_sys.poweroff, risk="confirm"),
@@ -439,23 +446,38 @@ class AutonomousAres:
             return None
         # Remove cercas de codigo markdown, se houver.
         text = re.sub(r"^```(?:json)?|```$", "", text, flags=re.MULTILINE).strip()
-        blob = None
+
+        # 1) A resposta inteira e JSON?
+        try:
+            return self._normalize_plan(json.loads(text))
+        except ValueError:
+            pass
+
+        # 2) Ha um objeto ou lista embutido no texto?
         for pattern in (r"\{.*\}", r"\[.*\]"):
             match = re.search(pattern, text, re.DOTALL)
-            if match:
-                blob = match.group(0)
-                break
-        if blob is None:
-            return {"actions": [], "reply": text}
-        try:
-            data = json.loads(blob)
-        except ValueError as exc:
-            warn(TAG, f"plano invalido do LLM: {exc!r}")
-            return {"actions": [], "reply": text}
+            if not match:
+                continue
+            try:
+                data = json.loads(match.group(0))
+            except ValueError:
+                continue
+            plan = self._normalize_plan(data)
+            if plan is not None:
+                return plan
+
+        return {"actions": [], "reply": text}
+
+    @staticmethod
+    def _normalize_plan(data: Any) -> dict[str, Any] | None:
+        """Normaliza a resposta do LLM no formato {actions, reply}."""
         if isinstance(data, list):
             return {"actions": [p for p in data if isinstance(p, dict)], "reply": ""}
         if not isinstance(data, dict):
-            return {"actions": [], "reply": text}
+            return None
+        if "actions" not in data and "reply" not in data:
+            # Objeto que nao tem a forma de um plano: nao serve.
+            return None
         actions = data.get("actions")
         if not isinstance(actions, list):
             actions = []
@@ -614,6 +636,27 @@ class AutonomousAres:
                 }
 
         return {"ok": True, "reason": "", "needs_confirm": False}
+
+    # ---- ferramentas internas -------------------------------------------------------
+    def _notify(self, message: str = "") -> str:
+        """Avisa o usuario. No daemon, a mensagem ja vai para o log/stdout."""
+        text = str(message).strip()
+        if not text:
+            return "Aviso sem mensagem."
+        self._speak_reply(text)
+        return text
+
+    def _reset_context(self) -> str:
+        """Limpa o historico da conversa (libera memoria do LLM)."""
+        self.context.reset()
+        return "Contexto da conversa limpo."
+
+    def _reconnect_llm(self) -> str:
+        """Tenta (re)conectar o servidor llama.cpp."""
+        online, model = self.llm.reconnect()
+        if online:
+            return f"Servidor llama.cpp online ({model or 'modelo desconhecido'})."
+        return "Servidor llama.cpp continua offline."
 
     # ---- fala ---------------------------------------------------------------------
     @property

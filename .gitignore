@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Builds
+build/
+dist/
+*.spec.bak
+
+# Ambiente
+.env
+.venv/
+venv/
+
+# Modelos e binarios locais
+models/*.bin
+models/*.onnx
+*.so
+*.dylib
+
+# Estado local do ARES
+.ares/
+*.db
+*.log

@@ -110,6 +110,15 @@ DEFAULTS: dict = {
         "llm_planning": True,      # usa o LLM para planejar acoes complexas
         "fallback_to_heuristic": True,
     },
+    "daemon": {
+        "enabled": False,          # IA autonoma sem mensagem (observa e age sozinha)
+        "interval": 60,            # segundos entre ciclos de observacao
+        "report_cooldown": 900,    # segundos antes de repetir a mesma acao
+        "auto_actions": True,      # executa acoes seguras automaticamente
+        "llm_decisions": True,     # consulta o LLM para decidir o que fazer
+        "log": True,               # registra em ~/.ares/daemon.log
+        "verbose": False,          # mostra o que acontece em cada ciclo
+    },
 }
 
 # mapeamento de variaveis de ambiente -> (secao, chave, tipo)
@@ -147,6 +156,11 @@ ENV_MAP = {
     "ARES7_AUTONOMOUS_STEPS": ("autonomous", "max_steps", "int"),
     "ARES7_AUTONOMOUS_PLANNING": ("autonomous", "llm_planning", "bool"),
     "ARES7_AUTONOMOUS_CONFIRM": ("autonomous", "confirm_required", "bool"),
+    "ARES7_DAEMON_ENABLED": ("daemon", "enabled", "bool"),
+    "ARES7_DAEMON_INTERVAL": ("daemon", "interval", "int"),
+    "ARES7_DAEMON_COOLDOWN": ("daemon", "report_cooldown", "int"),
+    "ARES7_DAEMON_ACTIONS": ("daemon", "auto_actions", "bool"),
+    "ARES7_DAEMON_DECISIONS": ("daemon", "llm_decisions", "bool"),
 }
 
 
@@ -195,8 +209,12 @@ class Config:
             try:
                 if kind == "bool":
                     value: object = raw.strip().lower() in ("1", "true", "yes", "sim", "on")
+                elif kind == "int":
+                    value = int(raw)
+                elif kind == "float":
+                    value = float(raw)
                 else:
-                    value = kind(raw)
+                    value = raw
             except ValueError:
                 print(f"[CONFIG] Valor invalido em {env}={raw!r}; ignorado")
                 continue
