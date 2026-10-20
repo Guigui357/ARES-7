@@ -28,6 +28,7 @@ from tools import apps as t_apps
 from tools import files as t_files
 from tools import media as t_media
 from tools import network as t_network
+from tools import screen as t_screen
 from tools import system as t_sys
 from tools.base import Tool
 from tts.piper import TTS
@@ -51,6 +52,12 @@ _TOOL_REQUIREMENTS: dict[str, tuple[tuple[str, ...], ...]] = {
     "open_folder": (("xdg-open",),),
     "web_search": (("xdg-open",),),
     "lock_screen": (("loginctl", "xdg-screensaver", "gnome-screensaver-command"),),
+    "mouse_move": (("xdotool", "python3"),),
+    "mouse_click": (("xdotool", "python3"),),
+    "mouse_scroll": (("xdotool", "python3"),),
+    "type_text": (("xdotool", "python3"),),
+    "key_press": (("xdotool", "python3"),),
+    "focus_window": (("wmctrl", "xdotool"),),
 }
 
 # Parametros realmente obrigatorios de cada ferramenta.
@@ -84,41 +91,48 @@ def _file_search_anywhere(name: str, base: str = "") -> str:
 def _register_tools(ares_instance: "AutonomousAres") -> dict[str, Tool]:
     """Registra ferramentas locais disponiveis para execução autônoma."""
     global _AUTONOMOUS_TOOLS
-    _AUTONOMOUS_TOOLS = {
-        "system_info": Tool("system_info", "CPU, RAM, temperatura, bateria e disco", t_sys.system_info),
-        "process_list": Tool("process_list", "Lista processos que mais usam memoria", t_sys.process_list),
-        "network_info": Tool("network_info", "IP local e conectividade", t_network.network_info),
-        "volume": Tool("volume", "Ajusta o volume (ex.: '40%', '5%+')", t_sys.volume, params={"step": "str"}),
-        "mute": Tool("mute", "Muta/desmuta o som (toggle|1|0)", t_sys.mute, params={"mode": "str"}),
-        "brightness": Tool("brightness", "Ajusta o brilho (ex.: '10%+', '50%')", t_sys.brightness, params={"step": "str"}),
-        "screenshot": Tool("screenshot", "Tira uma captura de tela", t_sys.screenshot),
-        "media": Tool("media", "Controla musica (play-pause/next/previous/stop)", t_media.media,
-                      params={"action": "str"}),
-        "list_dir": Tool("list_dir", "Lista o conteudo de uma pasta", t_files.list_dir, params={"path": "str"}),
-        "file_search": Tool("file_search", "Procura arquivos por nome", _file_search_anywhere,
-                            params={"name": "str", "base": "str"}),
-        "open_folder": Tool("open_folder", "Abre uma pasta (DOWNLOAD, DOCUMENTS...)", t_files.open_folder,
-                            params={"kind": "str"}),
-        "open_app": Tool("open_app", "Abre um aplicativo pelo nome", t_apps.open_app, params={"name": "str"}),
-        "open_site": Tool("open_site", "Abre um site conhecido", t_apps.open_site, params={"name": "str"}),
-        "open_url": Tool("open_url", "Abre uma URL", t_apps.open_url, params={"url": "str", "label": "str"}),
-        "web_search": Tool("web_search", "Pesquisa na web (google/youtube/wikipedia/maps)", t_apps.web_search,
-                           params={"query": "str", "engine": "str"}),
-        # Ferramentas internas: usadas pelo daemon e pelo planejamento.
-        "notify": Tool("notify", "Avisa o usuario sobre o que aconteceu", ares_instance._notify,
-                       params={"message": "str"}),
-        "reset_context": Tool("reset_context", "Limpa o historico da conversa para liberar memoria",
-                              ares_instance._reset_context),
-        "reconnect_llm": Tool("reconnect_llm", "Tenta subir/reconectar o servidor llama.cpp",
-                              ares_instance._reconnect_llm),
-        # Acoes de risco: exigem confirmacao do usuario.
-        "lock_screen": Tool("lock_screen", "Bloqueia a tela", t_sys.lock_screen, risk="confirm"),
-        "poweroff": Tool("poweroff", "Desliga o computador", t_sys.poweroff, risk="confirm"),
-        "reboot": Tool("reboot", "Reinicia o computador", t_sys.reboot, risk="confirm"),
-        "suspend": Tool("suspend", "Suspende o computador", t_sys.suspend, risk="confirm"),
-        "close_app": Tool("close_app", "Fecha um aplicativo pelo nome", t_apps.close_app, risk="confirm",
-                          params={"name": "str"}),
-    }
+        _AUTONOMOUS_TOOLS = {
+            "system_info": Tool("system_info", "CPU, RAM, temperatura, bateria e disco", t_sys.system_info),
+            "process_list": Tool("process_list", "Lista processos que mais usam memoria", t_sys.process_list),
+            "network_info": Tool("network_info", "IP local e conectividade", t_network.network_info),
+            "volume": Tool("volume", "Ajusta o volume (ex.: '40%', '5%+')", t_sys.volume, params={"step": "str"}),
+            "mute": Tool("mute", "Muta/desmuta o som (toggle|1|0)", t_sys.mute, params={"mode": "str"}),
+            "brightness": Tool("brightness", "Ajusta o brilho (ex.: '10%+', '50%')", t_sys.brightness, params={"step": "str"}),
+            "screenshot": Tool("screenshot", "Tira uma captura de tela", t_sys.screenshot),
+            "media": Tool("media", "Controla musica (play-pause/next/previous/stop)", t_media.media,
+                          params={"action": "str"}),
+            "list_dir": Tool("list_dir", "Lista o conteudo de uma pasta", t_files.list_dir, params={"path": "str"}),
+            "file_search": Tool("file_search", "Procura arquivos por nome", _file_search_anywhere,
+                                params={"name": "str", "base": "str"}),
+            "open_folder": Tool("open_folder", "Abre uma pasta (DOWNLOAD, DOCUMENTS...)", t_files.open_folder,
+                                params={"kind": "str"}),
+            "open_app": Tool("open_app", "Abre um aplicativo pelo nome", t_apps.open_app, params={"name": "str"}),
+            "open_site": Tool("open_site", "Abre um site conhecido", t_apps.open_site, params={"name": "str"}),
+            "open_url": Tool("open_url", "Abre uma URL", t_apps.open_url, params={"url": "str", "label": "str"}),
+            "web_search": Tool("web_search", "Pesquisa na web (google/youtube/wikipedia/maps)", t_apps.web_search,
+                               params={"query": "str", "engine": "str"}),
+            # Controle de tela
+            "mouse_move": Tool("mouse_move", "Move o mouse", t_screen.mouse_move, params={"x": "int", "y": "int", "duration": "float"}, risk="confirm"),
+            "mouse_click": Tool("mouse_click", "Clica com mouse", t_screen.mouse_click, params={"button": "str", "clicks": "int", "x": "int", "y": "int"}, risk="confirm"),
+            "mouse_scroll": Tool("mouse_scroll", "Rola a tela", t_screen.mouse_scroll, params={"amount": "int"}, risk="confirm"),
+            "type_text": Tool("type_text", "Digita texto", t_screen.type_text, params={"text": "str", "delay": "float"}, risk="confirm"),
+            "key_press": Tool("key_press", "Envia atalho", t_screen.key_press, params={"keys": "str"}, risk="confirm"),
+            "focus_window": Tool("focus_window", "Foca janela", t_screen.focus_window, params={"name": "str"}, risk="confirm"),
+            # Ferramentas internas
+            "notify": Tool("notify", "Avisa o usuario sobre o que aconteceu", ares_instance._notify,
+                           params={"message": "str"}),
+            "reset_context": Tool("reset_context", "Limpa o historico da conversa para liberar memoria",
+                                  ares_instance._reset_context),
+            "reconnect_llm": Tool("reconnect_llm", "Tenta subir/reconectar o servidor llama.cpp",
+                                  ares_instance._reconnect_llm),
+            # Acoes de risco
+            "lock_screen": Tool("lock_screen", "Bloqueia a tela", t_sys.lock_screen, risk="confirm"),
+            "poweroff": Tool("poweroff", "Desliga o computador", t_sys.poweroff, risk="confirm"),
+            "reboot": Tool("reboot", "Reinicia o computador", t_sys.reboot, risk="confirm"),
+            "suspend": Tool("suspend", "Suspende o computador", t_sys.suspend, risk="confirm"),
+            "close_app": Tool("close_app", "Fecha um aplicativo pelo nome", t_apps.close_app, risk="confirm",
+                              params={"name": "str"}),
+        }
     return _AUTONOMOUS_TOOLS
 
 

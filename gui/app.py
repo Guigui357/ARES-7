@@ -35,6 +35,7 @@ GREEN = "#00ffa3"
 RED = "#ff3366"
 AMBER = "#ffb300"
 USER_COLOR = "#6db3ff"
+VIOLET = "#9d7bff"
 MONO = "DejaVu Sans Mono"
 SANS = "DejaVu Sans"
 
@@ -129,7 +130,7 @@ class Ares7GUI:
         h.create_text(23, 22, text="A R E S - 7", anchor="w", fill=blend(CYAN, BG, 0.28),
                       font=(SANS, 19, "bold"))
         h.create_text(21, 21, text="A R E S - 7", anchor="w", fill=CYAN, font=(SANS, 19, "bold"))
-        h.create_text(23, 40, text="NÚCLEO LOCAL  //  WHISPER · QWEN · PIPER", anchor="w",
+        h.create_text(23, 40, text="NÚCLEO LOCAL  //  WHISPER · QWEN · PIPER  //  CONTROLE DE TELA", anchor="w",
                       fill=DIM, font=(MONO, 8))
         col = self.online_color
         x1, x0 = width - 18, width - 168

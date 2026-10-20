@@ -177,6 +177,39 @@ def make_handler(ares, token: str):
             elif parsed.path == "/api/tts":
                 ares.speak_enabled = bool(payload.get("enabled", True))
                 self._json({"tts": ares.speak_enabled})
+            elif parsed.path == "/api/notify":
+                msg = str(payload.get("message", "")).strip()
+                if msg:
+                    ares.emit("system", msg)
+                    try:
+                        ares.announce(msg)
+                    except Exception:
+                        pass
+                self._json({"ok": True})
+            elif parsed.path == "/api/run":
+                action = str(payload.get("action", "")).strip()
+                params = payload.get("params") or {}
+                if not action:
+                    self._json({"error": "action vazio"}, 400)
+                    return
+                try:
+                    from core.autonomous import AutonomousAres
+                    auto = getattr(ares, "_auto", None) or AutonomousAres(config=None, core=ares)
+                    if not hasattr(ares, "_auto"):
+                        ares._auto = auto
+                    res = auto.run_autonomous(f"execute {action} " + json.dumps(params, ensure_ascii=False), skip_local=True) if False else None
+                except Exception:
+                    res = None
+                # Executa direto via ferramenta
+                try:
+                    tool = auto.tools.get(action)
+                    if tool is None:
+                        self._json({"error": "acao desconhecida"}, 404)
+                        return
+                    result = tool.run(**(params if isinstance(params, dict) else {}))
+                    self._json({"ok": True, "result": result})
+                except Exception as e:
+                    self._json({"error": str(e)}, 500)
             else:
                 self._json({"error": "rota desconhecida"}, 404)
 
